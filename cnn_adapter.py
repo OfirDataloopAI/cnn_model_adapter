@@ -223,8 +223,8 @@ def model_creation(package: dl.Package, project: dl.Project):
 
 
 if __name__ == "__main__":
-    dl.setenv('rc')
-    project = dl.projects.get(project_name='QA_MODELS_V3')
+    dl.setenv('prod')
+    project = dl.projects.get(project_name='Abeer N Ofir Project')
     package_creation(project=project)
     package = project.packages.get(package_name='cnn')
     # package.artifacts.list()
