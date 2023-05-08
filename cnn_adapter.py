@@ -23,7 +23,7 @@ import cnn_model
 logger = logging.getLogger('cnn-adapter')
 
 
-@dl.Package.decorators.module(name='cnn-adapter',
+@dl.Package.decorators.module(name='model-adapter',
                               description='CNN Adapter for Dummy Model',
                               init_inputs={'model_entity': dl.Model})
 class ModelAdapter(dl.BaseModelAdapter):
