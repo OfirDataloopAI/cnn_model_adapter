@@ -4,7 +4,7 @@ import torchvision.transforms
 # import torch.optim as optim
 import torch.nn.functional
 # import pandas as pd
-# import numpy as np
+import numpy as np
 import dtlpy as dl
 import torch.nn
 import logging
@@ -97,6 +97,8 @@ class ModelAdapter(dl.BaseModelAdapter):
             ]
         }
 
+        logger.critical(f"DATA PATH: {data_path} --- OUTPUT PATH: {output_path}")
+
         train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, 'train'),
                                               dataset_entity=self.model_entity.dataset,
                                               annotation_type=dl.AnnotationType.CLASSIFICATION,
@@ -133,7 +135,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         logger.info("Model trained successfully")
 
-    def predict(self, batch: list, **kwargs):
+    def predict(self, batch: np.ndarray, **kwargs):
         if not self.model:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
@@ -191,7 +193,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v5'),
+                                        git_tag='v6'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
