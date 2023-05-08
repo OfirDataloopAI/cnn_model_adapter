@@ -46,7 +46,8 @@ class ModelAdapter(dl.BaseModelAdapter):
         super(ModelAdapter, self).__init__(model_entity=model_entity)
 
     def load(self, local_path: str, **kwargs):
-        weights = self.model_entity.configuration.get('weights', 'model.pth')
+        weights = self.model_entity.configuration.get('weights_filename', 'model.pth')
+
 
         # TODO: LOAD MODEL
         self.model.load_state_dict(torch.load(weights))
@@ -55,7 +56,7 @@ class ModelAdapter(dl.BaseModelAdapter):
     def save(self, local_path: str, **kwargs):
 
         # TODO: SAVE MODEL
-        weights = kwargs.get('weights', 'model.pth')
+        weights = kwargs.get('weights_filename', 'model.pth')
         torch.save(self.model, os.path.join(local_path, weights))
         self.configuration['weights'] = weights
         logger.info("Model saved successfully")
@@ -158,7 +159,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
 def package_creation(project: dl.Project):
     metadata = dl.Package.get_ml_metadata(cls=ModelAdapter,
-                                          default_configuration={'weights': 'model.pth',
+                                          default_configuration={'weights_filename': 'model.pth',
                                                                  'input_size': 256,
                                                                  'hyper_parameters': {
                                                                      "num_epochs": 50,
@@ -188,7 +189,7 @@ def package_creation(project: dl.Project):
                                                                             max_replicas=1),
                                                                         concurrency=1).to_json()},
                                     metadata=metadata)
-    # package.metadata = {'system': {'ml': {'defaultConfiguration': {'weights': 'model.pth',
+    # package.metadata = {'system': {'ml': {'defaultConfiguration': {'weights_filename': 'model.pth',
     #                                                                'input_size': 256},
     #                                       'outputType': dl.AnnotationType.CLASSIFICATION,
     #                                       'tags': ['torch'], }}}
@@ -213,7 +214,7 @@ def model_creation(package: dl.Package, project: dl.Project):
                                   dataset_id=dataset.id,
                                   scope='public',
                                   status='created',
-                                  configuration={'weights': 'model.pth',
+                                  configuration={'weights_filename': 'model.pth',
                                                  'batch_size': 16,
                                                  'hyper_parameters': {
                                                      "num_epochs": 50,
