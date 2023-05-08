@@ -49,7 +49,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         weights = self.model_entity.configuration.get('weights_filename', 'model.pth')
 
 
-        # TODO: LOAD MODEL
+        # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
         if not self.model:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
