@@ -167,6 +167,8 @@ def package_creation(project: dl.Project):
                                                                  }},
                                           output_type=dl.AnnotationType.CLASSIFICATION,
                                           )
+
+    # TODO: Very important to add tag
     module = dl.PackageModule.from_entry_point(entry_point='cnn_adapter.py')
     package = project.packages.push(package_name='cnn',
                                     src_path=os.getcwd(),
