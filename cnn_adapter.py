@@ -50,6 +50,9 @@ class ModelAdapter(dl.BaseModelAdapter):
 
 
         # TODO: LOAD MODEL
+        if not self.model:
+            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+
         self.model.load_state_dict(torch.load(weights))
         logger.info("Model loaded successfully")
 
@@ -179,7 +182,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v3'),
+                                        git_tag='v4'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
