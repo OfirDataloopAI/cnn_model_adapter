@@ -24,7 +24,7 @@ logger = logging.getLogger('cnn-adapter')
 
 
 @dl.Package.decorators.module(name='model-adapter',
-                              description='CNN Adapter for Dummy Model',
+                              description='CNN Adapter for CNN Example Model',
                               init_inputs={'model_entity': dl.Model})
 class ModelAdapter(dl.BaseModelAdapter):
     """
@@ -179,7 +179,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v2'),
+                                        git_tag='v3'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
