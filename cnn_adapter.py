@@ -165,7 +165,7 @@ def package_creation(project: dl.Project):
                                                                      "optimizer_lr": 0.01,
                                                                      "output_size": 10,
                                                                  }},
-                                          output_type=dl.AnnotationType.POINT,
+                                          output_type=dl.AnnotationType.CLASSIFICATION,
                                           )
     module = dl.PackageModule.from_entry_point(entry_point='cnn_adapter.py')
     package = project.packages.push(package_name='cnn',
@@ -207,7 +207,7 @@ def model_creation(package: dl.Package, project: dl.Project):
 
     model = package.models.create(model_name='cnn',
                                   description='cnn-model for testing',
-                                  tags=['pretrained', 'no-data'],
+                                  tags=['pretrained', 'MNIST'],
                                   dataset_id=dataset.id,
                                   scope='public',
                                   status='created',
