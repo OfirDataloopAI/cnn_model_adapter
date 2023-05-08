@@ -23,8 +23,8 @@ import cnn_model
 logger = logging.getLogger('cnn-adapter')
 
 
-@dl.Package.decorators.module(name='model-adapter',
-                              description='Model Adapter for Dummy Model',
+@dl.Package.decorators.module(name='cnn-adapter',
+                              description='CNN Adapter for Dummy Model',
                               init_inputs={'model_entity': dl.Model})
 class ModelAdapter(dl.BaseModelAdapter):
     """
@@ -203,12 +203,14 @@ def model_creation(package: dl.Package, project: dl.Project):
     for i in range(10):
         labels.append(str(i))
 
-    model = package.models.create(model_name='dummy-model',
-                                  description='dummy-model for testing',
+    dataset = project.datasets.get(dataset_name="MNIST_Dataset")
+
+    model = package.models.create(model_name='cnn',
+                                  description='cnn-model for testing',
                                   tags=['pretrained', 'no-data'],
-                                  dataset_id=None,
+                                  dataset_id=dataset.id,
                                   scope='public',
-                                  status='trained',
+                                  status='created',
                                   configuration={'weights': 'model.pth',
                                                  'batch_size': 16,
                                                  'hyper_parameters': {
