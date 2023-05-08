@@ -51,6 +51,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         # TODO: LOAD MODEL
         if not self.model:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         self.model.load_state_dict(torch.load(weights))
@@ -65,6 +66,10 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
+        if not self.model:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+
         ######################
         # Create Dataloaders #
         ######################
@@ -129,6 +134,10 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model trained successfully")
 
     def predict(self, batch: list, **kwargs):
+        if not self.model:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+
         # TODO: PREDICT MODEL
         input_size = self.configuration.get('input_size', 256)
         batch_predictions = cnn_model.predict(model=self.model, device=self.device, batch=batch, input_size=input_size)
@@ -182,7 +191,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v4'),
+                                        git_tag='v5'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
