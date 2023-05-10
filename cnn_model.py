@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 import torchvision
-# import copy
+import copy
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -71,18 +71,19 @@ def train_model(model: CNN, device, hyper_parameters, dataloaders, output_path):
 
     x_axis = list(range(num_epochs))
     CNN_graph_data = dict()
+    CNN_graph_data["epochs"] = x_axis
     CNN_graph_data["train"] = dict()
     CNN_graph_data["valid"] = dict()
     CNN_graph_data["train"]["loss"] = list()
     CNN_graph_data["valid"]["loss"] = list()
     CNN_graph_data["train"]["accuracy"] = list()
     CNN_graph_data["valid"]["accuracy"] = list()
+    CNN_graph_data["optimal_val_epoch"] = 0
+    CNN_graph_data["optimal_val_accuracy"] = 0
 
-    ######################
-    # Create Dataloaders #
-    ######################
-
-
+    #########
+    # Train #
+    #########
     optimal_val_epoch = 0
     optimal_val_accuracy = 0
 
@@ -131,7 +132,16 @@ def train_model(model: CNN, device, hyper_parameters, dataloaders, output_path):
             CNN_graph_data[phase]["loss"].append(epoch_loss)
             CNN_graph_data[phase]["accuracy"].append(epoch_accuracy)
 
-    return epoch_loss, epoch_accuracy
+            if epoch_accuracy > optimal_val_accuracy:
+                optimal_val_epoch = epoch
+                optimal_val_accuracy = epoch_accuracy
+                CNN_graph_data[phase]["optimal_val_epoch"] = optimal_val_epoch
+                CNN_graph_data[phase]["optimal_val_accuracy"] = optimal_val_accuracy
+
+                PATH = "model.pth"
+                torch.save(copy.deepcopy(model.state_dict()), PATH)
+
+    return CNN_graph_data
 
 
 def predict(model: CNN, device, batch, input_size):
@@ -194,23 +204,20 @@ def get_dataloaders():
 
     # Create samplers
     train_sampler = SubsetRandomSampler(train_subset_idx)
-    validaiton_sampler = SubsetRandomSampler(val_subset_idx)
-
+    validation_sampler = SubsetRandomSampler(val_subset_idx)
 
     mean = [0.4914, 0.4822, 0.4465]
     standard_deviation = [0.2471, 0.2435, 0.2616]
-
 
     # Training Loaders
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               sampler=train_sampler, num_workers=2)
     validationloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                                   sampler=validaiton_sampler, num_workers=2)
+                                                   sampler=validation_sampler, num_workers=2)
 
     # MNIST Testing Loader
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=True, num_workers=2)
-
 
     trainset_size = len(train_subset_idx)
     validset_size = len(val_subset_idx)
@@ -226,12 +233,35 @@ def get_dataloaders():
     return trainloader, validationloader, testloader
 
 
+# Plot graph
+def plot_graph(CNN_graph_data: dict):
+    plt.title("CNN Loss:")
+    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["train"]["loss"], label="Train")
+    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["valid"]["loss"], label="Validation")
+    plt.xlabel("Number of epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.savefig("loss.png")
+
+    plt.title("CNN Accuracy:")
+    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["train"]["accuracy"], label="Train")
+    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["valid"]["accuracy"], label="Validation")
+    plt.xlabel("Number of epochs")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.savefig("accuracy.png")
+
+    print("Optimal hyper parameters were found at:")
+    print("Epoch:", CNN_graph_data["optimal_val_epoch"])
+    print("The Validation Accuracy:", CNN_graph_data["optimal_val_accuracy"])
+
+
 def main():
     device = get_device()
     model = CNN(use_dropout=True).to(device=device)
 
     hyper_parameters = {
-        "num_epochs": 50,
+        "num_epochs": 5,
         "optimizer_lr": 0.01,
         "output_size": 10,
     }
@@ -240,9 +270,22 @@ def main():
         "train": trainloader,
         "valid": validationloader
     }
+
+    # Training model
     output_path = "."
-    train_model(model=model, device=device, hyper_parameters=hyper_parameters, dataloaders=dataloaders,
-                output_path=output_path)
+    CNN_graph_data = train_model(
+        model=model, device=device,
+        hyper_parameters=hyper_parameters,
+        dataloaders=dataloaders,
+        output_path=output_path
+    )
+
+    # Plotting graph
+    plot_graph(CNN_graph_data=CNN_graph_data)
+
+    # Predict
+    for batch in testloader:
+        print(predict(model=model, device=device, batch=batch, input_size=10))
 
 
 if __name__ == "__main__":
