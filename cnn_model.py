@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torchvision
 import copy
+import os
 
 import matplotlib.pyplot as plt
 import torch.nn as nn
@@ -11,16 +12,15 @@ import torchvision.transforms as T
 
 # from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
-
 # from torch.autograd import Variable
+from PIL import Image
 from torch.utils.data.sampler import SubsetRandomSampler
 # from torchvision import models
 from sklearn.model_selection import train_test_split
 # from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
 from tqdm import tqdm
+
 # from imgaug import augmenters as iaa
-# import os
 
 
 # Model define
@@ -161,16 +161,12 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
 
 def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int):
-    mean = [0.4914, 0.4822, 0.4465]
-    standard_deviation = [0.2471, 0.2435, 0.2616]
-
     preprocess = torchvision.transforms.Compose(
         [
-            torchvision.transforms.ToPILImage(),
-            torchvision.transforms.Resize(input_size),
-            torchvision.transforms.ToTensor(),
-            # torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1]
-            torchvision.transforms.Normalize(mean=mean, std=standard_deviation)  # [-1, 1]
+            T.ToPILImage(),
+            T.Resize(input_size),
+            T.ToTensor(),
+            T.Normalize((0.5,), (0.5,)),
         ]
     )
 
@@ -315,39 +311,47 @@ def local_testing(model, device, dataloader):
     print("Model Accuracy =", (correct_count/all_count) * 100)
 
 
-def local_predict(model, device, testloader):
+def local_predict(model, device):
     PATH = "model.pth"
     model.load_state_dict(torch.load(PATH))
-    batch_predictions = None
-    true_labels = None
 
-    for images, labels in testloader:
-        batch = images.permute(0, 2, 3, 1)
-        input_size = 28
-        batch_results = predict(model=model, device=device, batch=batch.numpy(), input_size=input_size)
+    input_size = 28
+    image_folder = "./test_images"  # Path to the image folder
+    image_files = [file for file in os.listdir(image_folder) if file.endswith(".jpg") or file.endswith(".png")]
 
-        if batch_predictions is not None:
-            batch_predictions = torch.cat((batch_predictions, batch_results), dim=0)
-        else:
-            batch_predictions = batch_results
+    # Load and convert images to np.ndarray
+    image_list = list()
+    for file in image_files:
+        image_path = os.path.join(image_folder, file)
+        image = Image.open(image_path)
+        image_array = np.array(image)
+        image_list.append(image_array)
 
-        if true_labels is not None:
-            true_labels = torch.cat((true_labels, labels), dim=0)
-        else:
-            true_labels = labels
+    batch = np.stack(image_list)
+    batch_predictions = predict(model=model, device=device, batch=batch, input_size=input_size)
+    batch_annotations = parse_predict(batch_predictions)
 
-    parse_predict(batch_predictions, true_labels)
-
-    # return batch_predictions
+    return batch_annotations
 
 
-def parse_predict(batch_predictions, true_labels):
-    for index, img_prediction in enumerate(batch_predictions):
+def parse_predict(batch_predictions):
+    import dtlpy as dl
+
+    batch_annotations = list()
+
+    for img_prediction in batch_predictions:
         pred_score, high_pred_index = torch.max(img_prediction, 0)
+        pred_label = str(high_pred_index.item())
+        collection = dl.AnnotationCollection()
+        collection.add(annotation_definition=dl.Classification(label=pred_label),
+                       model_info={'name': "CNN",
+                                   'confidence': pred_score.item(),
+                                   'model_id': "local id",
+                                   'dataset_id': "local folder"})
+        print("Predicted {:1} ({:1.3f})".format(pred_label, pred_score))
+        batch_annotations.append(collection)
 
-        # print(pred_score)
-        # print(high_pred_index == true_labels[index])
-        print("=====")
+    return batch_annotations
 
 
 def main():
@@ -370,10 +374,10 @@ def main():
     # local_training(model, device, hyper_parameters, dataloaders, output_path)
 
     # Model Testing
-    local_testing(model, device, testloader)
+    # local_testing(model, device, testloader)
 
     # Model Predict
-    # local_predict(model, device, testloader)
+    local_predict(model, device)
 
 
 if __name__ == "__main__":
