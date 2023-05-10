@@ -1,0 +1,5 @@
+https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so
+
+If plt.show() fail:
+
+sudo apt-get install python3-tk
