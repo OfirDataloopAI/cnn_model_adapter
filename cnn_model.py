@@ -145,14 +145,18 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
 
 def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int):
+    mean = [0.4914, 0.4822, 0.4465]
+    standard_deviation = [0.2471, 0.2435, 0.2616]
+
     preprocess = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToPILImage(),
             torchvision.transforms.Resize(input_size),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1]
+            # torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1]
         ]
     )
+
     img_tensors = [preprocess(img.astype('uint8')) for img in batch]
     batch_tensor = torch.stack(tensors=img_tensors).to(device)
     batch_output = model(batch_tensor)
@@ -206,8 +210,7 @@ def get_dataloaders():
     train_sampler = SubsetRandomSampler(train_subset_idx)
     validation_sampler = SubsetRandomSampler(val_subset_idx)
 
-    mean = [0.4914, 0.4822, 0.4465]
-    standard_deviation = [0.2471, 0.2435, 0.2616]
+
 
     # Training Loaders
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
@@ -270,8 +273,28 @@ def local_training(model, device, hyper_parameters, dataloaders, output_path):
 def local_predict(model, device, testloader):
     PATH = "model.pth"
     model.load_state_dict(torch.load(PATH))
-    for batch in testloader:
-        print(predict(model=model, device=device, batch=batch, input_size=10))
+    batch_predictions = None
+
+    for images, labels in testloader:
+        batch = images.permute(0, 2, 3, 1)
+        batch_results = predict(model=model, device=device, batch=batch.numpy(), input_size=10)
+
+        if batch_predictions is not None:
+            batch_predictions = torch.cat((batch_predictions, batch_results), dim=0)
+        else:
+            batch_predictions = batch_results
+
+    parse_predict(batch_predictions)
+
+    # return batch_predictions
+
+
+def parse_predict(batch_predictions):
+    for img_prediction in batch_predictions:
+        pred_score, high_pred_index = torch.max(img_prediction, 0)
+        print(pred_score)
+        print(high_pred_index)
+        print("XXX")
 
 
 def main():
