@@ -228,8 +228,21 @@ def get_dataloaders():
 
 def main():
     device = get_device()
-    trainloader, validationloader, testloader = get_dataloaders()
+    model = CNN(use_dropout=True).to(device=device)
 
+    hyper_parameters = {
+        "num_epochs": 50,
+        "optimizer_lr": 0.01,
+        "output_size": 10,
+    }
+    trainloader, validationloader, testloader = get_dataloaders()
+    dataloaders = {
+        "train": trainloader,
+        "valid": validationloader
+    }
+    output_path = "."
+    train_model(model=model, device=device, hyper_parameters=hyper_parameters, dataloaders=dataloaders,
+                output_path=output_path)
 
 
 if __name__ == "__main__":
