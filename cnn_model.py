@@ -292,6 +292,8 @@ def local_testing(model, device, dataloader):
     y_true = list()
     y_predict = list()
 
+    PATH = "model.pth"
+    model.load_state_dict(torch.load(PATH))
     model.eval()
     with torch.no_grad():
         for inputs, labels in dataloader:
@@ -299,8 +301,8 @@ def local_testing(model, device, dataloader):
             labels = labels.to(device)
             # logits
             outputs = model(inputs)
-            preds_prob = nn.functional.softmax(outputs)
-            _, preds = torch.max(preds_prob, 1)
+            preds_prob = nn.functional.softmax(input=outputs, dim=1)
+            _, preds = torch.max(input=preds_prob, dim=1)
             # eval labels here numeric (not one-hot)
             correct_pred = torch.eq(labels, preds).cpu()
             correct_count += correct_pred.numpy().sum()
@@ -365,7 +367,7 @@ def main():
     output_path = "."
 
     # Model Training
-    local_training(model, device, hyper_parameters, dataloaders, output_path)
+    # local_training(model, device, hyper_parameters, dataloaders, output_path)
 
     # Model Testing
     local_testing(model, device, testloader)
