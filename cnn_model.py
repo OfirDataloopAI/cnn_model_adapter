@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 import torch
 import torchvision
 # import copy
@@ -7,85 +7,20 @@ import torchvision
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-# import torchvision.transforms as T
+import torchvision.transforms as T
 
 # from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
 
 # from torch.autograd import Variable
-# from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler
 # from torchvision import models
-# from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 # from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 from tqdm import tqdm
 # from imgaug import augmenters as iaa
 # import os
-
-### Setting device
-
-# if torch.cuda.is_available():
-#     device = torch.device("cuda")
-# else:
-#     device = torch.device("cpu")
-#
-# print("Using device:", device)
-#
-# ### Prepare dataloaders
-#
-# transform = T.Compose([
-#     T.ToTensor(),
-#     T.Normalize((0.5,), (0.5,))
-# ])
-#
-# # Number of Training images
-# N = 30000
-# batch_size = 128
-#
-# # Datasets
-# trainset = torchvision.datasets.MNIST(root='./data', train=True,
-#                                       download=True, transform=transform)
-# testset = torchvision.datasets.MNIST(root='./data', train=False,
-#                                      download=True, transform=transform)
-#
-# # Train and Validation split
-# train_size = len(trainset)
-# train_idx = np.arange(train_size)
-# train_subset_idx = np.random.choice(train_idx, N)
-# train_subset_idx, val_subset_idx = train_test_split(train_subset_idx,
-#                                                     test_size=0.2,
-#                                                     random_state=0)
-#
-# # Create samplers
-# train_sampler = SubsetRandomSampler(train_subset_idx)
-# validaiton_sampler = SubsetRandomSampler(val_subset_idx)
-#
-#
-# mean = [0.4914, 0.4822, 0.4465]
-# standard_deviation = [0.2471, 0.2435, 0.2616]
-#
-#
-# # Training Loaders
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-#                                           sampler=train_sampler, num_workers=2)
-# validationloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-#                                                sampler=validaiton_sampler, num_workers=2)
-#
-# # MNIST Testing Loader
-# testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-#                                          shuffle=True, num_workers=2)
-#
-#
-# trainset_size = len(train_subset_idx)
-# validset_size = len(val_subset_idx)
-# testset_size = len(testset)
-
-
-# print('='*25)
-# print('Train dataset:', trainset_size)
-# print('Validation dataset:', validset_size)
-# print('Test dataset:', testset_size)
-# print('='*25)
 
 
 # Model define
@@ -216,8 +151,89 @@ def predict(model: CNN, device, batch, input_size):
     return batch_predictions
 
 
+#######################
+# Local Model Testing #
+#######################
+
+# Setting device
+def get_device():
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
+    print("Using device:", device)
+
+    return device
 
 
+# Prepare dataloaders
+def get_dataloaders():
+    transform = T.Compose([
+        T.ToTensor(),
+        T.Normalize((0.5,), (0.5,))
+    ])
+
+    # Number of Training images
+    N = 30000
+    batch_size = 128
+
+    # Datasets
+    trainset = torchvision.datasets.MNIST(root='./data', train=True,
+                                          download=True, transform=transform)
+    testset = torchvision.datasets.MNIST(root='./data', train=False,
+                                         download=True, transform=transform)
+
+    # Train and Validation split
+    train_size = len(trainset)
+    train_idx = np.arange(train_size)
+    train_subset_idx = np.random.choice(train_idx, N)
+    train_subset_idx, val_subset_idx = train_test_split(train_subset_idx,
+                                                        test_size=0.2,
+                                                        random_state=0)
+
+    # Create samplers
+    train_sampler = SubsetRandomSampler(train_subset_idx)
+    validaiton_sampler = SubsetRandomSampler(val_subset_idx)
+
+
+    mean = [0.4914, 0.4822, 0.4465]
+    standard_deviation = [0.2471, 0.2435, 0.2616]
+
+
+    # Training Loaders
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                              sampler=train_sampler, num_workers=2)
+    validationloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                                   sampler=validaiton_sampler, num_workers=2)
+
+    # MNIST Testing Loader
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                             shuffle=True, num_workers=2)
+
+
+    trainset_size = len(train_subset_idx)
+    validset_size = len(val_subset_idx)
+    testset_size = len(testset)
+
+
+    print('='*25)
+    print('Train dataset:', trainset_size)
+    print('Validation dataset:', validset_size)
+    print('Test dataset:', testset_size)
+    print('='*25)
+
+    return trainloader, validationloader, testloader
+
+
+def main():
+    device = get_device()
+    trainloader, validationloader, testloader = get_dataloaders()
+
+
+
+if __name__ == "__main__":
+    main()
 
 # def validate_model(model, dataloader, criterion):
 #     model.eval()  # Set model to evaluate mode
