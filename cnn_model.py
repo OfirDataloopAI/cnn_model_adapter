@@ -86,20 +86,24 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
 
+    ######################################
+    # Data Structures for Saving Results #
+    ######################################
     optimal_val_epoch = 0
     optimal_val_accuracy = 0
 
     x_axis = list(range(num_epochs))
     cnn_graph_data = dict()
     cnn_graph_data["epochs"] = x_axis
+    cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
+    cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
+
     cnn_graph_data["train"] = dict()
     cnn_graph_data["valid"] = dict()
     cnn_graph_data["train"]["loss"] = list()
     cnn_graph_data["valid"]["loss"] = list()
     cnn_graph_data["train"]["accuracy"] = list()
     cnn_graph_data["valid"]["accuracy"] = list()
-    cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
-    cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
     #########
     # Train #
@@ -121,6 +125,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
             running_loss = 0.0
             running_corrects = 0.0
 
+            # Looping over all the dataloader images
             for i, data in enumerate(dataloader, start=0):
                 inputs, labels = data
                 inputs = inputs.to(device)
@@ -143,11 +148,13 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data).cpu()
 
+            # Saving epoch loss and accuracy
             epoch_loss = running_loss / dataset_size
             epoch_accuracy = (running_corrects / dataset_size) * 100
             cnn_graph_data[phase]["loss"].append(epoch_loss)
             cnn_graph_data[phase]["accuracy"].append(epoch_accuracy)
 
+            # Saving the weights of the best epoch
             if epoch_accuracy > optimal_val_accuracy:
                 optimal_val_epoch = epoch
                 optimal_val_accuracy = epoch_accuracy.item()
@@ -160,7 +167,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
     return cnn_graph_data
 
 
-def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int):
+def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int) -> torch.Tensor:
     preprocess = torchvision.transforms.Compose(
         [
             T.ToPILImage(),
@@ -170,6 +177,7 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
         ]
     )
 
+    # Predict images
     img_tensors = [preprocess(img.astype('uint8')) for img in batch]
     batch_tensor = torch.stack(tensors=img_tensors).to(device)
     batch_output = model(batch_tensor)
@@ -183,14 +191,9 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
 #######################
 
 # Setting device
-def get_device():
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-
+def get_device() -> torch.device:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
-
     return device
 
 
@@ -271,6 +274,7 @@ def plot_graph(cnn_graph_data: dict):
     print("The Validation Accuracy:", cnn_graph_data["optimal_val_accuracy"])
 
 
+# Model Training Local Test
 def local_training(model, device, hyper_parameters, dataloaders, output_path):
     cnn_graph_data = train_model(
         model=model,
@@ -282,14 +286,15 @@ def local_training(model, device, hyper_parameters, dataloaders, output_path):
     plot_graph(cnn_graph_data=cnn_graph_data)
 
 
+# Model Testing Local Test
 def local_testing(model, device, dataloader):
     correct_count = 0
     all_count = 0
     y_true = list()
     y_predict = list()
 
-    PATH = "model.pth"
-    model.load_state_dict(torch.load(PATH))
+    weights_path = "model.pth"
+    model.load_state_dict(torch.load(weights_path))
     model.eval()
 
     ########
@@ -315,30 +320,7 @@ def local_testing(model, device, dataloader):
     print("Model Accuracy =", (correct_count/all_count) * 100)
 
 
-def local_predict(model, device):
-    PATH = "model.pth"
-    model.load_state_dict(torch.load(PATH))
-
-    input_size = 28
-    image_folder = "./test_images"  # Path to the image folder
-    image_files = [file for file in os.listdir(image_folder) if file.endswith(".jpg") or file.endswith(".png")]
-
-    # Load and convert images to np.ndarray
-    image_list = list()
-    for file in image_files:
-        image_path = os.path.join(image_folder, file)
-        image = Image.open(image_path)
-        image_array = np.array(image)
-        image_list.append(image_array)
-
-    batch = np.stack(image_list)
-    batch_predictions = predict(model=model, device=device, batch=batch, input_size=input_size)
-    batch_annotations = parse_predict(batch_predictions)
-
-    return batch_annotations
-
-
-def parse_predict(batch_predictions):
+def parse_predict(batch_predictions) -> list:
     import dtlpy as dl
 
     batch_annotations = list()
@@ -354,6 +336,31 @@ def parse_predict(batch_predictions):
                                    'dataset_id': "local folder"})
         print("Predicted {:1} ({:1.3f})".format(pred_label, pred_score))
         batch_annotations.append(collection)
+
+    return batch_annotations
+
+
+# Model Predict Local Test
+def local_predict(model, device) -> list:
+    weights_path = "model.pth"
+    model.load_state_dict(torch.load(weights_path))
+
+    input_size = 28
+    image_folder = "./test_images"  # Path to the image folder
+    image_files = [file for file in os.listdir(image_folder) if file.endswith(".jpg") or file.endswith(".png")]
+
+    # Load and convert images to np.ndarray
+    image_list = list()
+    for file in image_files:
+        image_path = os.path.join(image_folder, file)
+        image = Image.open(image_path)
+        image_array = np.array(image)
+        image_list.append(image_array)
+
+    # Convert predictions to annotations
+    batch = np.stack(image_list)
+    batch_predictions = predict(model=model, device=device, batch=batch, input_size=input_size)
+    batch_annotations = parse_predict(batch_predictions)
 
     return batch_annotations
 

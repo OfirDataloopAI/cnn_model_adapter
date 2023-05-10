@@ -3,8 +3,8 @@ torch>=1.8
 torchvision>0.9
 imbalanced-learn
 imgaug
-PIL
-sklearn
+Pillow
+scikit-learn
 tqdm
 numpy
 matplotlib
