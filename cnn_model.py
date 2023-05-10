@@ -256,6 +256,24 @@ def plot_graph(CNN_graph_data: dict):
     print("The Validation Accuracy:", CNN_graph_data["optimal_val_accuracy"])
 
 
+def local_training(model, device, hyper_parameters, dataloaders, output_path):
+    CNN_graph_data = train_model(
+        model=model,
+        device=device,
+        hyper_parameters=hyper_parameters,
+        dataloaders=dataloaders,
+        output_path=output_path
+    )
+    plot_graph(CNN_graph_data=CNN_graph_data)
+
+
+def local_predict(model, device, testloader):
+    PATH = "model.pth"
+    model.load_state_dict(torch.load(PATH))
+    for batch in testloader:
+        print(predict(model=model, device=device, batch=batch, input_size=10))
+
+
 def main():
     device = get_device()
     model = CNN(use_dropout=True).to(device=device)
@@ -273,18 +291,10 @@ def main():
     output_path = "."
 
     # Model Training
-    CNN_graph_data = train_model(
-        model=model,
-        device=device,
-        hyper_parameters=hyper_parameters,
-        dataloaders=dataloaders,
-        output_path=output_path
-    )
-    plot_graph(CNN_graph_data=CNN_graph_data)
+    # local_training(model, device, hyper_parameters, dataloaders, output_path)
 
     # Model Predict
-    for batch in testloader:
-        print(predict(model=model, device=device, batch=batch, input_size=10))
+    local_predict(model, device, testloader)
 
 
 if __name__ == "__main__":
