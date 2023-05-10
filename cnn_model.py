@@ -134,9 +134,9 @@ def train_model(model: CNN, device, hyper_parameters, dataloaders, output_path):
 
             if epoch_accuracy > optimal_val_accuracy:
                 optimal_val_epoch = epoch
-                optimal_val_accuracy = epoch_accuracy
-                CNN_graph_data[phase]["optimal_val_epoch"] = optimal_val_epoch
-                CNN_graph_data[phase]["optimal_val_accuracy"] = optimal_val_accuracy
+                optimal_val_accuracy = epoch_accuracy.item()
+                CNN_graph_data["optimal_val_epoch"] = optimal_val_epoch
+                CNN_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
                 PATH = "model.pth"
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
