@@ -48,7 +48,6 @@ class ModelAdapter(dl.BaseModelAdapter):
     def load(self, local_path: str, **kwargs):
         weights = self.model_entity.configuration.get('weights_filename', 'model.pth')
 
-
         # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
         if not self.model:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -58,7 +57,6 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
-
         # TODO: SAVE MODEL
         weights = kwargs.get('weights_filename', 'model.pth')
         torch.save(self.model, os.path.join(local_path, weights))
@@ -73,7 +71,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         # Create Dataloaders #
         ######################
-        input_size = self.configuration.get('input_size', 256)
+        input_size = self.configuration.get('input_size', 28)
 
         # def gray_to_rgb(x):
         #     return x.convert('RGB')
@@ -143,7 +141,7 @@ class ModelAdapter(dl.BaseModelAdapter):
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         # TODO: PREDICT MODEL
-        input_size = self.configuration.get('input_size', 256)
+        input_size = self.configuration.get('input_size', 28)
         batch_predictions = cnn_model.predict(model=self.model, device=self.device, batch=batch, input_size=input_size)
         batch_annotations = list()
 
@@ -156,7 +154,7 @@ class ModelAdapter(dl.BaseModelAdapter):
                                        'confidence': pred_score.item(),
                                        'model_id': self.model_entity.id,
                                        'dataset_id': self.model_entity.dataset_id})
-            logger.debug("Predicted {:20} ({:1.3f})".format(pred_label, pred_score))
+            logger.debug("Predicted {:1} ({:1.3f})".format(pred_label, pred_score))
             batch_annotations.append(collection)
 
         return batch_annotations

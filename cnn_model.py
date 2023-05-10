@@ -86,24 +86,24 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
 
+    optimal_val_epoch = 0
+    optimal_val_accuracy = 0
+
     x_axis = list(range(num_epochs))
-    CNN_graph_data = dict()
-    CNN_graph_data["epochs"] = x_axis
-    CNN_graph_data["train"] = dict()
-    CNN_graph_data["valid"] = dict()
-    CNN_graph_data["train"]["loss"] = list()
-    CNN_graph_data["valid"]["loss"] = list()
-    CNN_graph_data["train"]["accuracy"] = list()
-    CNN_graph_data["valid"]["accuracy"] = list()
-    CNN_graph_data["optimal_val_epoch"] = 0
-    CNN_graph_data["optimal_val_accuracy"] = 0
+    cnn_graph_data = dict()
+    cnn_graph_data["epochs"] = x_axis
+    cnn_graph_data["train"] = dict()
+    cnn_graph_data["valid"] = dict()
+    cnn_graph_data["train"]["loss"] = list()
+    cnn_graph_data["valid"]["loss"] = list()
+    cnn_graph_data["train"]["accuracy"] = list()
+    cnn_graph_data["valid"]["accuracy"] = list()
+    cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
+    cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
     #########
     # Train #
     #########
-    optimal_val_epoch = 0
-    optimal_val_accuracy = 0
-
     for epoch in tqdm(range(num_epochs)):
         # Each epoch has a training and validation phase
         for phase in ["train", "valid"]:
@@ -145,19 +145,19 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
             epoch_loss = running_loss / dataset_size
             epoch_accuracy = (running_corrects / dataset_size) * 100
-            CNN_graph_data[phase]["loss"].append(epoch_loss)
-            CNN_graph_data[phase]["accuracy"].append(epoch_accuracy)
+            cnn_graph_data[phase]["loss"].append(epoch_loss)
+            cnn_graph_data[phase]["accuracy"].append(epoch_accuracy)
 
             if epoch_accuracy > optimal_val_accuracy:
                 optimal_val_epoch = epoch
                 optimal_val_accuracy = epoch_accuracy.item()
-                CNN_graph_data["optimal_val_epoch"] = optimal_val_epoch
-                CNN_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
+                cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
+                cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
                 PATH = "model.pth"
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
 
-    return CNN_graph_data
+    return cnn_graph_data
 
 
 def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int):
@@ -248,10 +248,10 @@ def get_dataloaders():
 
 
 # Plot graph
-def plot_graph(CNN_graph_data: dict):
+def plot_graph(cnn_graph_data: dict):
     plt.title("CNN Loss:")
-    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["train"]["loss"], label="Train")
-    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["valid"]["loss"], label="Validation")
+    plt.plot(cnn_graph_data["epochs"], cnn_graph_data["train"]["loss"], label="Train")
+    plt.plot(cnn_graph_data["epochs"], cnn_graph_data["valid"]["loss"], label="Validation")
     plt.xlabel("Number of epochs")
     plt.ylabel("Loss")
     plt.legend()
@@ -259,27 +259,27 @@ def plot_graph(CNN_graph_data: dict):
 
     plt.clf()
     plt.title("CNN Accuracy:")
-    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["train"]["accuracy"], label="Train")
-    plt.plot(CNN_graph_data["epochs"], CNN_graph_data["valid"]["accuracy"], label="Validation")
+    plt.plot(cnn_graph_data["epochs"], cnn_graph_data["train"]["accuracy"], label="Train")
+    plt.plot(cnn_graph_data["epochs"], cnn_graph_data["valid"]["accuracy"], label="Validation")
     plt.xlabel("Number of epochs")
     plt.ylabel("Accuracy")
     plt.legend()
     plt.savefig("accuracy.png")
 
     print("Optimal hyper parameters were found at:")
-    print("Epoch:", CNN_graph_data["optimal_val_epoch"])
-    print("The Validation Accuracy:", CNN_graph_data["optimal_val_accuracy"])
+    print("Epoch:", cnn_graph_data["optimal_val_epoch"])
+    print("The Validation Accuracy:", cnn_graph_data["optimal_val_accuracy"])
 
 
 def local_training(model, device, hyper_parameters, dataloaders, output_path):
-    CNN_graph_data = train_model(
+    cnn_graph_data = train_model(
         model=model,
         device=device,
         hyper_parameters=hyper_parameters,
         dataloaders=dataloaders,
         output_path=output_path
     )
-    plot_graph(CNN_graph_data=CNN_graph_data)
+    plot_graph(cnn_graph_data=cnn_graph_data)
 
 
 def local_testing(model, device, dataloader):
@@ -291,6 +291,10 @@ def local_testing(model, device, dataloader):
     PATH = "model.pth"
     model.load_state_dict(torch.load(PATH))
     model.eval()
+
+    ########
+    # Test #
+    ########
     with torch.no_grad():
         for inputs, labels in dataloader:
             inputs = inputs.to(device)
@@ -382,69 +386,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# def validate_model(model, dataloader, criterion):
-#     model.eval()  # Set model to evaluate mode
-#     running_loss = 0
-#     running_corrects = 0
-#
-#     with torch.no_grad():
-#         for i, data in enumerate(dataloader, 0):
-#             # get the inputs; data is a list of [inputs, labels]
-#             inputs, labels = data
-#             # mode to device/cuda
-#             inputs, labels = inputs.to(device), labels.to(device)
-#             logits = model(inputs)
-#             _, preds = torch.max(logits, 1)
-#
-#             # Cross-entropy loss
-#             loss = criterion(logits, labels)
-#
-#             # statistics
-#             running_loss += loss.item() * inputs.size(0)
-#             running_corrects += torch.sum(preds == labels.data)
-#
-#     epoch_loss = running_loss / validset_size
-#     epoch_accuracy = ((running_corrects.double() / validset_size) * 100).item()
-#
-#     return epoch_loss, epoch_accuracy
-#
-#
-# for epoch in tqdm(range(num_epochs)):
-#     train_loss, train_accuracy = train_epoch(CNN_model, trainloader, CNN_criterion, CNN_optimizer)
-#     val_loss, val_accuracy = val_epoch(CNN_model, validationloader, CNN_criterion)
-#
-#     CNN_graph_data["train"]["loss"].append(train_loss)
-#     CNN_graph_data["valid"]["loss"].append(val_loss)
-#     CNN_graph_data["train"]["accuracy"].append(train_accuracy)
-#     CNN_graph_data["valid"]["accuracy"].append(val_accuracy)
-#
-#     if val_accuracy > optimal_val_accuracy:
-#         optimal_val_epoch = epoch
-#         optimal_val_accuracy = val_accuracy
-#         PATH = "./cnn_parameters.pth"
-#         torch.save(copy.deepcopy(CNN_model.state_dict()), PATH)
-#
-#
-# plt.title("CNN Loss:")
-# plt.plot(x_axis, CNN_graph_data["train"]["loss"], label="Train")
-# plt.plot(x_axis, CNN_graph_data["valid"]["loss"], label="Validation")
-# plt.xlabel("Number of epochs")
-# plt.ylabel("Loss")
-# plt.legend()
-# plt.show()
-#
-# plt.title("CNN Accuracy:")
-# plt.plot(x_axis, CNN_graph_data["train"]["accuracy"], label="Train")
-# plt.plot(x_axis, CNN_graph_data["valid"]["accuracy"], label="Validation")
-# plt.xlabel("Number of epochs")
-# plt.ylabel("Accuracy")
-# plt.legend()
-# plt.show()
-#
-# print("Optimal hyper parameters were found at:")
-# print("Epoch:", optimal_val_epoch)
-# print("The Validation Accuracy:", optimal_val_accuracy)
-#
-# PATH = "./cnn_parameters.pth"
-# CNN_model.load_state_dict(torch.load(PATH))
