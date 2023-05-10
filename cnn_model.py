@@ -148,13 +148,17 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
     mean = [0.4914, 0.4822, 0.4465]
     standard_deviation = [0.2471, 0.2435, 0.2616]
 
+    def gray_to_rgb(x):
+        return x.convert('RGB')
+
     preprocess = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToPILImage(),
+            gray_to_rgb,
             torchvision.transforms.Resize(input_size),
             torchvision.transforms.ToTensor(),
             # torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1]
-            # torchvision.transforms.Normalize(mean=mean, std=standard_deviation)  # [-1, 1]
+            torchvision.transforms.Normalize(mean=mean, std=standard_deviation)  # [-1, 1]
         ]
     )
 
@@ -279,7 +283,8 @@ def local_predict(model, device, testloader):
 
     for images, labels in testloader:
         batch = images.permute(0, 2, 3, 1)
-        batch_results = predict(model=model, device=device, batch=batch.numpy(), input_size=10)
+        input_size = 28
+        batch_results = predict(model=model, device=device, batch=batch.numpy(), input_size=input_size)
 
         print()
 

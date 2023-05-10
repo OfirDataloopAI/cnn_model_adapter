@@ -230,6 +230,7 @@ def model_creation(package: dl.Package, project: dl.Project):
                                   status='created',
                                   configuration={'weights_filename': 'model.pth',
                                                  'batch_size': 16,
+                                                 'input_size': 256,
                                                  'hyper_parameters': {
                                                      "num_epochs": 50,
                                                      "optimizer_lr": 0.01,
