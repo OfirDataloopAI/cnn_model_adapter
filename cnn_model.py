@@ -154,6 +154,7 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
             torchvision.transforms.Resize(input_size),
             torchvision.transforms.ToTensor(),
             # torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # [-1, 1]
+            # torchvision.transforms.Normalize(mean=mean, std=standard_deviation)  # [-1, 1]
         ]
     )
 
@@ -274,27 +275,36 @@ def local_predict(model, device, testloader):
     PATH = "model.pth"
     model.load_state_dict(torch.load(PATH))
     batch_predictions = None
+    true_labels = None
 
     for images, labels in testloader:
         batch = images.permute(0, 2, 3, 1)
         batch_results = predict(model=model, device=device, batch=batch.numpy(), input_size=10)
+
+        print()
 
         if batch_predictions is not None:
             batch_predictions = torch.cat((batch_predictions, batch_results), dim=0)
         else:
             batch_predictions = batch_results
 
-    parse_predict(batch_predictions)
+        if true_labels is not None:
+            true_labels = torch.cat((true_labels, labels), dim=0)
+        else:
+            true_labels = labels
+
+    parse_predict(batch_predictions, true_labels)
 
     # return batch_predictions
 
 
-def parse_predict(batch_predictions):
-    for img_prediction in batch_predictions:
+def parse_predict(batch_predictions, true_labels):
+    for index, img_prediction in enumerate(batch_predictions):
         pred_score, high_pred_index = torch.max(img_prediction, 0)
-        print(pred_score)
-        print(high_pred_index)
-        print("XXX")
+
+        # print(pred_score)
+        print(high_pred_index == true_labels[index])
+        print("=====")
 
 
 def main():
@@ -302,7 +312,7 @@ def main():
     model = CNN(use_dropout=True).to(device=device)
 
     hyper_parameters = {
-        "num_epochs": 5,
+        "num_epochs": 10,
         "optimizer_lr": 0.01,
         "output_size": 10,
     }
