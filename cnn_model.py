@@ -61,7 +61,7 @@ class CNN(nn.Module):
         return x
 
 
-def train_model(model: CNN, device, hyper_parameters, dataloaders, output_path):
+def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str):
     #########################
     # Load Hyper Parameters #
     #########################
@@ -144,7 +144,7 @@ def train_model(model: CNN, device, hyper_parameters, dataloaders, output_path):
     return CNN_graph_data
 
 
-def predict(model: CNN, device, batch, input_size):
+def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int):
     preprocess = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToPILImage(),
@@ -256,6 +256,10 @@ def plot_graph(CNN_graph_data: dict):
     print("The Validation Accuracy:", CNN_graph_data["optimal_val_accuracy"])
 
 
+def local_training():
+
+
+
 def main():
     device = get_device()
     model = CNN(use_dropout=True).to(device=device)
@@ -270,20 +274,19 @@ def main():
         "train": trainloader,
         "valid": validationloader
     }
-
-    # Training model
     output_path = "."
+
+    # Model Training
     CNN_graph_data = train_model(
-        model=model, device=device,
+        model=model,
+        device=device,
         hyper_parameters=hyper_parameters,
         dataloaders=dataloaders,
         output_path=output_path
     )
-
-    # Plotting graph
     plot_graph(CNN_graph_data=CNN_graph_data)
 
-    # Predict
+    # Model Predict
     for batch in testloader:
         print(predict(model=model, device=device, batch=batch, input_size=10))
 
