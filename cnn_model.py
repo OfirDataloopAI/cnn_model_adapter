@@ -61,13 +61,30 @@ class CNN(nn.Module):
         return x
 
 
+def get_data_transforms():
+    torch.manual_seed(0)
+    np.random.seed(0)
+
+    data_transforms = {
+        'train': [
+            T.ToTensor(),
+            T.Normalize((0.5,), (0.5,)),
+        ],
+        'valid': [
+            T.ToTensor(),
+            T.Normalize((0.5,), (0.5,)),
+        ]
+    }
+    return data_transforms
+
+
 def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str):
     #########################
     # Load Hyper Parameters #
     #########################
     num_epochs = hyper_parameters.get("num_epochs", 50)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
+    optimizer = optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
 
     x_axis = list(range(num_epochs))
     CNN_graph_data = dict()
@@ -93,14 +110,13 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
             if phase == "train":
                 # Set model to training mode
                 model.train()
-
                 dataloader = dataloaders["train"]
-                dataset_size = len(dataloader.dataset)
+                dataset_size = len(dataloader.batch_sampler.sampler)
             else:
                 # Set model to evaluate mode
                 model.eval()
                 dataloader = dataloaders["valid"]
-                dataset_size = len(dataloader.dataset)
+                dataset_size = len(dataloader.batch_sampler.sampler)
 
             running_loss = 0.0
             running_corrects = 0.0
@@ -184,9 +200,12 @@ def get_device():
 
 # Prepare dataloaders
 def get_dataloaders():
+    torch.manual_seed(0)
+    np.random.seed(0)
+
     transform = T.Compose([
         T.ToTensor(),
-        T.Normalize((0.5,), (0.5,))
+        T.Normalize((0.5,), (0.5,)),
     ])
 
     # Number of Training images
@@ -211,23 +230,18 @@ def get_dataloaders():
     train_sampler = SubsetRandomSampler(train_subset_idx)
     validation_sampler = SubsetRandomSampler(val_subset_idx)
 
-
-
     # Training Loaders
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+    trainloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size,
                                               sampler=train_sampler, num_workers=2)
-    validationloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+    validationloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size,
                                                    sampler=validation_sampler, num_workers=2)
-
-    # MNIST Testing Loader
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+    testloader = torch.utils.data.DataLoader(dataset=testset, batch_size=batch_size,
                                              shuffle=True, num_workers=2)
 
+    # Printing Dataset Sizes
     trainset_size = len(train_subset_idx)
     validset_size = len(val_subset_idx)
     testset_size = len(testset)
-
-
     print('='*25)
     print('Train dataset:', trainset_size)
     print('Validation dataset:', validset_size)
@@ -247,6 +261,7 @@ def plot_graph(CNN_graph_data: dict):
     plt.legend()
     plt.savefig("loss.png")
 
+    plt.clf()
     plt.title("CNN Accuracy:")
     plt.plot(CNN_graph_data["epochs"], CNN_graph_data["train"]["accuracy"], label="Train")
     plt.plot(CNN_graph_data["epochs"], CNN_graph_data["valid"]["accuracy"], label="Validation")
@@ -269,6 +284,33 @@ def local_training(model, device, hyper_parameters, dataloaders, output_path):
         output_path=output_path
     )
     plot_graph(CNN_graph_data=CNN_graph_data)
+
+
+def local_testing(model, device, dataloader):
+    correct_count = 0
+    all_count = 0
+    y_true = list()
+    y_predict = list()
+
+    model.eval()
+    with torch.no_grad():
+        for inputs, labels in dataloader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            # logits
+            outputs = model(inputs)
+            preds_prob = nn.functional.softmax(outputs)
+            _, preds = torch.max(preds_prob, 1)
+            # eval labels here numeric (not one-hot)
+            correct_pred = torch.eq(labels, preds).cpu()
+            correct_count += correct_pred.numpy().sum()
+            all_count += len(labels)
+
+            y_true.extend(labels.tolist())
+            y_predict.extend(preds.tolist())
+
+    print("Number Of Images Tested =", all_count)
+    print("Model Accuracy =", (correct_count/all_count) * 100)
 
 
 def local_predict(model, device, testloader):
@@ -311,7 +353,7 @@ def main():
     model = CNN(use_dropout=True).to(device=device)
 
     hyper_parameters = {
-        "num_epochs": 10,
+        "num_epochs": 20,
         "optimizer_lr": 0.01,
         "output_size": 10,
     }
@@ -323,10 +365,13 @@ def main():
     output_path = "."
 
     # Model Training
-    # local_training(model, device, hyper_parameters, dataloaders, output_path)
+    local_training(model, device, hyper_parameters, dataloaders, output_path)
+
+    # Model Testing
+    local_testing(model, device, testloader)
 
     # Model Predict
-    local_predict(model, device, testloader)
+    # local_predict(model, device, testloader)
 
 
 if __name__ == "__main__":

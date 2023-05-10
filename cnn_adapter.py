@@ -75,27 +75,29 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         input_size = self.configuration.get('input_size', 256)
 
-        def gray_to_rgb(x):
-            return x.convert('RGB')
+        # def gray_to_rgb(x):
+        #     return x.convert('RGB')
 
-        data_transforms = {
-            'train': [
-                iaa.Resize({"height": input_size, "width": input_size}),
-                iaa.flip.Fliplr(p=0.5),
-                iaa.flip.Flipud(p=0.2),
-                torchvision.transforms.ToPILImage(),
-                gray_to_rgb,
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-            ],
-            'valid': [
-                torchvision.transforms.ToPILImage(),
-                gray_to_rgb,
-                torchvision.transforms.Resize((input_size, input_size)),
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-            ]
-        }
+        # data_transforms = {
+        #     'train': [
+        #         iaa.Resize({"height": input_size, "width": input_size}),
+        #         iaa.flip.Fliplr(p=0.5),
+        #         iaa.flip.Flipud(p=0.2),
+        #         torchvision.transforms.ToPILImage(),
+        #         gray_to_rgb,
+        #         torchvision.transforms.ToTensor(),
+        #         torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        #     ],
+        #     'valid': [
+        #         torchvision.transforms.ToPILImage(),
+        #         gray_to_rgb,
+        #         torchvision.transforms.Resize((input_size, input_size)),
+        #         torchvision.transforms.ToTensor(),
+        #         torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        #     ]
+        # }
+
+        data_transforms = cnn_model.get_data_transforms()
 
         logger.critical(f"DATA PATH: {data_path} --- OUTPUT PATH: {output_path}")
 
@@ -193,7 +195,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v6'),
+                                        git_tag='v7'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
