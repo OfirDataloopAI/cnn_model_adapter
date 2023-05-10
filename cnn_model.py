@@ -256,10 +256,6 @@ def plot_graph(CNN_graph_data: dict):
     print("The Validation Accuracy:", CNN_graph_data["optimal_val_accuracy"])
 
 
-def local_training():
-
-
-
 def main():
     device = get_device()
     model = CNN(use_dropout=True).to(device=device)
