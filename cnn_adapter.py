@@ -283,7 +283,7 @@ def predict_test(model: dl.Model):
 
 
 def main_check_model():
-    model = dl.models.get(model_id='645cbb300431f03a73cd0185')
+    model = dl.models.get(model_id='645cdf1a3375a5eb578c3557')
     train_test(model=model)
     # predict_test(model=model)
 

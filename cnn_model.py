@@ -127,6 +127,8 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
             # Looping over all the dataloader images
             for i, data in enumerate(dataloader, start=0):
+                # data["image"]
+                # data["annotations"]
                 inputs, labels = data
                 inputs = inputs.to(device)
                 labels = labels.to(device)
