@@ -47,21 +47,21 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model init completed")
 
     def load(self, local_path: str, **kwargs):
-        weights = self.model_entity.configuration.get('weights_filename', 'model.pth')
+        weights_filename = self.model_entity.configuration.get('weights_filename', 'model.pth')
 
         # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
         if not self.model:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
-        self.model.load_state_dict(torch.load(weights))
+        self.model.load_state_dict(torch.load(weights_filename))
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
         # TODO: SAVE MODEL
-        weights = kwargs.get('weights_filename', 'model.pth')
-        torch.save(self.model, os.path.join(local_path, weights))
-        self.configuration['weights'] = weights
+        weights_filename = kwargs.get('weights_filename', 'model.pth')
+        torch.save(self.model, os.path.join(local_path, weights_filename))
+        self.configuration['weights_filename'] = weights_filename
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
@@ -189,7 +189,7 @@ def package_creation(project: dl.Project):
     package = project.packages.push(package_name='cnn',
                                     src_path=os.getcwd(),
                                     # description='CNN implemented in pytorch',
-                                    is_global=True,
+                                    is_global=False,
                                     package_type='ml',
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     package_creation(project=project)
     package = project.packages.get(package_name='cnn')
     # package.artifacts.list()
-    model_creation(package=package, project=project)
+    # model_creation(package=package, project=project)
 
     # Useful:
     #https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
