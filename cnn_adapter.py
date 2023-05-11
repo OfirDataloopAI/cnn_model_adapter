@@ -99,7 +99,6 @@ class ModelAdapter(dl.BaseModelAdapter):
         data_transforms = cnn_model.get_data_transforms()
 
         logger.critical(f"DATA PATH: {data_path} --- OUTPUT PATH: {output_path}")
-
         paths = [val for sublist in [[os.path.join(i[0], j) for j in i[2]] for i in os.walk('./')] for val in sublist]
         for path in paths:
             logger.critical(f"PATH FOUND: {path}")
@@ -176,6 +175,9 @@ class ModelAdapter(dl.BaseModelAdapter):
         ...
 
 
+##############
+# Deployment #
+##############
 def package_creation(project: dl.Project):
     metadata = dl.Package.get_ml_metadata(cls=ModelAdapter,
                                           default_configuration={'weights_filename': 'model.pth',
@@ -247,13 +249,40 @@ def model_creation(package: dl.Package, project: dl.Project):
     return model
 
 
-if __name__ == "__main__":
+def main_deployment():
     dl.setenv('prod')
     project = dl.projects.get(project_name='Abeer N Ofir Project')
     package_creation(project=project)
     package = project.packages.get(package_name='cnn')
-    # package.artifacts.list()
+    package.artifacts.list()
     # model_creation(package=package, project=project)
 
     # Useful:
-    #https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
+    # https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
+
+
+############
+# Checking #
+############
+def train_test(model: dl.Model):
+    model_adapter = ModelAdapter(model_entity=model)
+    model_adapter.train_model(model=model)
+    print("IN PROGRESS")
+
+
+def predict_test(model: dl.Model):
+    model_adapter = ModelAdapter(model_entity=model)
+    item = dl.items.get(item_id='645cc2de66671c2da8908f3a')
+    result = model_adapter.predict_items(items=[item])
+    print(result)
+
+
+def main_check_model():
+    model = dl.models.get(model_id='645cbb300431f03a73cd0185')
+    train_test(model=model)
+    # predict_test(model=model)
+
+
+if __name__ == "__main__":
+    # main_deployment()
+    main_check_model()
