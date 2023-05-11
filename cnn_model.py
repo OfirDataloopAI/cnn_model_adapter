@@ -8,9 +8,7 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torchvision.transforms as T
 
-# from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
 # from torch.autograd import Variable
 from PIL import Image
@@ -61,18 +59,22 @@ class CNN(nn.Module):
         return x
 
 
-def get_data_transforms():
+def get_data_transforms(input_size):
     torch.manual_seed(0)
     np.random.seed(0)
 
     data_transforms = {
         'train': [
-            T.ToTensor(),
-            T.Normalize((0.5,), (0.5,)),
+            # torchvision.transforms.ToPILImage(),
+            # torchvision.transforms.Resize((input_size, input_size)),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.5,), (0.5,)),
         ],
         'valid': [
-            T.ToTensor(),
-            T.Normalize((0.5,), (0.5,)),
+            # torchvision.transforms.ToPILImage(),
+            # torchvision.transforms.Resize((input_size, input_size)),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.5,), (0.5,)),
         ]
     }
     return data_transforms
@@ -127,11 +129,12 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
             # Looping over all the dataloader images
             for i, data in enumerate(dataloader, start=0):
-                # data["image"]
-                # data["annotations"]
-                inputs, labels = data
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+                # TODO: Add flag for: local test, and remote test
+                # inputs, labels = data
+                # inputs = inputs.to(device)
+                # labels = labels.to(device)
+                inputs = data["image"].to(device)
+                labels = data["annotations"].squeeze().to(device)
 
                 # zero the gradient
                 optimizer.zero_grad()
@@ -166,16 +169,17 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 PATH = "model.pth"
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
 
+    plot_graph(cnn_graph_data)
     return cnn_graph_data
 
 
 def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int) -> torch.Tensor:
     preprocess = torchvision.transforms.Compose(
         [
-            T.ToPILImage(),
-            T.Resize(input_size),
-            T.ToTensor(),
-            T.Normalize((0.5,), (0.5,)),
+            # torchvision.transforms.ToPILImage(),
+            # torchvision.transforms.Resize((input_size, input_size)),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.5,), (0.5,)),
         ]
     )
 
@@ -204,14 +208,14 @@ def get_dataloaders():
     torch.manual_seed(0)
     np.random.seed(0)
 
-    transform = T.Compose([
-        T.ToTensor(),
-        T.Normalize((0.5,), (0.5,)),
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize((0.5,), (0.5,)),
     ])
 
     # Number of Training images
     N = 30000
-    batch_size = 128
+    batch_size = 16
 
     # Datasets
     trainset = torchvision.datasets.MNIST(root='./data', train=True,
@@ -384,13 +388,13 @@ def main():
     output_path = "."
 
     # Model Training
-    # local_training(model, device, hyper_parameters, dataloaders, output_path)
+    local_training(model, device, hyper_parameters, dataloaders, output_path)
 
     # Model Testing
     # local_testing(model, device, testloader)
 
     # Model Predict
-    local_predict(model, device)
+    # local_predict(model, device)
 
 
 if __name__ == "__main__":

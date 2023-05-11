@@ -73,35 +73,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         # Create Dataloaders #
         ######################
         input_size = self.configuration.get('input_size', 28)
-
-        # def gray_to_rgb(x):
-        #     return x.convert('RGB')
-
-        # data_transforms = {
-        #     'train': [
-        #         iaa.Resize({"height": input_size, "width": input_size}),
-        #         iaa.flip.Fliplr(p=0.5),
-        #         iaa.flip.Flipud(p=0.2),
-        #         torchvision.transforms.ToPILImage(),
-        #         gray_to_rgb,
-        #         torchvision.transforms.ToTensor(),
-        #         torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-        #     ],
-        #     'valid': [
-        #         torchvision.transforms.ToPILImage(),
-        #         gray_to_rgb,
-        #         torchvision.transforms.Resize((input_size, input_size)),
-        #         torchvision.transforms.ToTensor(),
-        #         torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-        #     ]
-        # }
-
-        data_transforms = cnn_model.get_data_transforms()
-
-        logger.critical(f"DATA PATH: {data_path} --- OUTPUT PATH: {output_path}")
-        paths = [val for sublist in [[os.path.join(i[0], j) for j in i[2]] for i in os.walk('./')] for val in sublist]
-        for path in paths:
-            logger.critical(f"PATH FOUND: {path}")
+        data_transforms = cnn_model.get_data_transforms(input_size=input_size)
 
         train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, 'train'),
                                               dataset_entity=self.model_entity.dataset,
@@ -117,11 +89,11 @@ class ModelAdapter(dl.BaseModelAdapter):
                                               id_to_label_map=self.model_entity.id_to_label_map)
 
         batch_size = self.configuration.get("batch_size", 16)
-        dataloaders = {'train': DataLoader(train_dataset,
+        dataloaders = {'train': DataLoader(dataset=train_dataset,
                                            batch_size=batch_size,
                                            shuffle=True,
                                            collate_fn=collate_torch),
-                       'valid': DataLoader(valid_dataset,
+                       'valid': DataLoader(dataset=valid_dataset,
                                            batch_size=batch_size,
                                            collate_fn=collate_torch,
                                            shuffle=True)}
@@ -129,7 +101,13 @@ class ModelAdapter(dl.BaseModelAdapter):
         # TODO: TRAIN MODEL
         logger.info("Model started training")
         hyper_parameters = self.configuration.get('hyper_parameters', None)
-        self.model = cnn_model.CNN(output_size=hyper_parameters.get("output_size", 10),
+        labels_count = self.configuration.get('id_to_label_map', None)
+        if labels_count:
+            output_size = len(labels_count)
+        else:
+            output_size = hyper_parameters.get("output_size", 10)
+
+        self.model = cnn_model.CNN(output_size=output_size,
                                    use_dropout=True).to(self.device)
         cnn_model.train_model(model=self.model,
                               device=self.device,
@@ -200,7 +178,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v8'),
+                                        git_tag='v9'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
@@ -267,7 +245,6 @@ def main_deployment():
 def train_test(model: dl.Model):
     model_adapter = ModelAdapter(model_entity=model)
     model_adapter.train_model(model=model)
-    print("IN PROGRESS")
 
 
 def predict_test(model: dl.Model):
@@ -283,7 +260,7 @@ def predict_test(model: dl.Model):
 
 
 def main_check_model():
-    model = dl.models.get(model_id='645cdf1a3375a5eb578c3557')
+    model = dl.models.get(model_id='645cff2a3375a532dd8c3559')
     train_test(model=model)
     # predict_test(model=model)
 
