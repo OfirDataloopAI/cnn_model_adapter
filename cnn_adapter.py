@@ -44,6 +44,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         # TODO: GET MODEL
         self.model = cnn_model.CNN(use_dropout=True).to(self.device)
         super(ModelAdapter, self).__init__(model_entity=model_entity)
+        logger.info("Model init completed")
 
     def load(self, local_path: str, **kwargs):
         weights = self.model_entity.configuration.get('weights_filename', 'model.pth')
