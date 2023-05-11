@@ -178,7 +178,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v10'),
+                                        git_tag='v11'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
@@ -260,7 +260,7 @@ def predict_test(model: dl.Model):
 
 
 def main_check_model():
-    model = dl.models.get(model_id='645cff2a3375a532dd8c3559')
+    model = dl.models.get(model_id='645d07073375a543ee8c355e')
     train_test(model=model)
     # predict_test(model=model)
 

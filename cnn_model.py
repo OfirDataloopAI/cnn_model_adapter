@@ -275,9 +275,11 @@ def plot_graph(cnn_graph_data: dict):
     plt.legend()
     plt.savefig("accuracy.png")
 
-    print("Optimal hyper parameters were found at:")
-    print("Epoch:", cnn_graph_data["optimal_val_epoch"])
-    print("The Validation Accuracy:", cnn_graph_data["optimal_val_accuracy"])
+    results = "Optimal hyper parameters were found at:\n" \
+              "Epoch: {}\n" \
+              "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
+                                                   cnn_graph_data["optimal_val_accuracy"])
+    print(results)
 
 
 # Model Training Local Test
