@@ -274,7 +274,12 @@ def predict_test(model: dl.Model):
     model_adapter = ModelAdapter(model_entity=model)
     item = dl.items.get(item_id='645cc2de66671c2da8908f3a')
     result = model_adapter.predict_items(items=[item])
-    print(result)
+
+    item_list = result[0]
+    item = item_list[0]
+    annotations = item.annotations.list()
+    label = annotations[0].label
+    print(f"Predicted label: {label}")
 
 
 def main_check_model():
