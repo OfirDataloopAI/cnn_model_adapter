@@ -100,6 +100,10 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         logger.critical(f"DATA PATH: {data_path} --- OUTPUT PATH: {output_path}")
 
+        paths = [val for sublist in [[os.path.join(i[0], j) for j in i[2]] for i in os.walk('./')] for val in sublist]
+        for path in paths:
+            logger.critical(f"PATH FOUND: {path}")
+
         train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, 'train'),
                                               dataset_entity=self.model_entity.dataset,
                                               annotation_type=dl.AnnotationType.CLASSIFICATION,
@@ -194,7 +198,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v7'),
+                                        git_tag='v8'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
