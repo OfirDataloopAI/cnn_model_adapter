@@ -159,7 +159,8 @@ class ModelAdapter(dl.BaseModelAdapter):
 def package_creation(project: dl.Project):
     metadata = dl.Package.get_ml_metadata(cls=ModelAdapter,
                                           default_configuration={'weights_filename': 'model.pth',
-                                                                 'input_size': 256,
+                                                                 'batch_size': 16,
+                                                                 'input_size': 28,
                                                                  'hyper_parameters': {
                                                                      "num_epochs": 50,
                                                                      "optimizer_lr": 0.01,
@@ -178,7 +179,7 @@ def package_creation(project: dl.Project):
                                     codebase=dl.GitCodebase(
                                         type=dl.PackageCodebaseType.GIT,
                                         git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v11'),
+                                        git_tag='v12'),
                                     modules=[module],
                                     service_config={
                                         'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
@@ -266,5 +267,5 @@ def main_check_model():
 
 
 if __name__ == "__main__":
-    # main_deployment()
-    main_check_model()
+    main_deployment()
+    # main_check_model()
