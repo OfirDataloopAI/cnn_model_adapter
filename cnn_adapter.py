@@ -169,41 +169,52 @@ class ModelAdapter(dl.BaseModelAdapter):
         ...
 
 
-##############
-# Deployment #
-##############
+####################
+# Package Creation #
+####################
 def package_creation(project: dl.Project):
-    metadata = dl.Package.get_ml_metadata(cls=ModelAdapter,
-                                          default_configuration={'weights_filename': 'model.pth',
-                                                                 'batch_size': 16,
-                                                                 'input_size': 28,
-                                                                 'hyper_parameters': {
-                                                                     "num_epochs": 50,
-                                                                     "optimizer_lr": 0.01,
-                                                                     "output_size": 10,
-                                                                 }},
-                                          output_type=dl.AnnotationType.CLASSIFICATION,
-                                          )
+    metadata = dl.Package.get_ml_metadata(
+        cls=ModelAdapter,
+        default_configuration={
+            "weights_filename": "model.pth",
+            "batch_size": 16,
+            "input_size": 28,
+            "hyper_parameters": {
+                "num_epochs": 50,
+                "optimizer_lr": 0.01,
+                "output_size": 10,
+            }
+        },
+        output_type=dl.AnnotationType.CLASSIFICATION,
+    )
 
     # TODO: Very important to add tag
     module = dl.PackageModule.from_entry_point(entry_point='cnn_adapter.py')
-    package = project.packages.push(package_name='cnn',
-                                    src_path=os.getcwd(),
-                                    is_global=False,
-                                    package_type='ml',
-                                    codebase=dl.GitCodebase(
-                                        type=dl.PackageCodebaseType.GIT,
-                                        git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-                                        git_tag='v12'),
-                                    modules=[module],
-                                    service_config={
-                                        'runtime': dl.KubernetesRuntime(pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
-                                                                        runner_image='gcr.io/viewo-g/modelmgmt/resnet:0.0.7',
-                                                                        autoscaler=dl.KubernetesRabbitmqAutoscaler(
-                                                                            min_replicas=0,
-                                                                            max_replicas=1),
-                                                                        concurrency=1).to_json()},
-                                    metadata=metadata)
+    package = project.packages.push(
+        package_name='cnn',
+        src_path=os.getcwd(),
+        is_global=False,
+        package_type='ml',
+        codebase=dl.GitCodebase(
+            type=dl.PackageCodebaseType.GIT,
+            git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
+            git_tag='v12'
+        ),
+        modules=[module],
+        service_config={
+            'runtime': dl.KubernetesRuntime(
+                pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
+                runner_image='gcr.io/viewo-g/modelmgmt/resnet:0.0.7',
+                autoscaler=dl.KubernetesRabbitmqAutoscaler(
+                    min_replicas=0,
+                    max_replicas=1
+                ),
+                concurrency=1
+            ).to_json()
+        },
+        metadata=metadata
+    )
+
     # package.metadata = {'system': {'ml': {'defaultConfiguration': {'weights_filename': 'model.pth',
     #                                                                'input_size': 256},
     #                                       'outputType': dl.AnnotationType.CLASSIFICATION,
@@ -216,6 +227,9 @@ def package_creation(project: dl.Project):
     return package
 
 
+##################
+# Model Creation #
+##################
 def dql_filters():
     train_filter = dl.Filters()
     validation_filter = dl.Filters()
@@ -238,66 +252,44 @@ def model_creation(package: dl.Package, project: dl.Project):
     dataset = project.datasets.get(dataset_name="MNIST_Dataset")
     train_filter, validation_filter = dql_filters()
 
-    model = package.models.create(model_name='cnn',
-                                  description='cnn-model for testing',
-                                  tags=['pretrained', 'MNIST'],
-                                  dataset_id=dataset.id,
-                                  scope='public',
-                                  status='created',
-                                  configuration={'weights_filename': 'model.pth',
-                                                 'batch_size': 16,
-                                                 'input_size': 28,
-                                                 'hyper_parameters': {
-                                                     "num_epochs": 50,
-                                                     "optimizer_lr": 0.01,
-                                                     "output_size": 10,
-                                                 }},
-                                  project_id=project.id,
-                                  labels=labels,
-                                  train_filter=train_filter,
-                                  validation_filter=validation_filter)
+    model = package.models.create(
+        model_name="cnn",
+        description="cnn-model for MNIST dataset",
+        tags=['pretrained', 'MNIST'],
+        dataset_id=dataset.id,
+        scope="public",
+        status="created",
+        configuration={
+            "weights_filename": "model.pth",
+            "batch_size": 16,
+            "input_size": 28,
+            "hyper_parameters": {
+                "num_epochs": 50,
+                "optimizer_lr": 0.01,
+                "output_size": 10,
+            }
+        },
+        project_id=project.id,
+        labels=labels,
+        train_filter=train_filter,
+        validation_filter=validation_filter
+    )
 
     return model
 
 
-def main_deployment():
+def main():
     dl.setenv('prod')
     project = dl.projects.get(project_name='Abeer N Ofir Project')
+
     package_creation(project=project)
+
     package = project.packages.get(package_name='cnn')
-    package.artifacts.list()
     model_creation(package=package, project=project)
-
-    # Useful:
-    # https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
-
-
-############
-# Checking #
-############
-def train_test(model: dl.Model):
-    model_adapter = ModelAdapter(model_entity=model)
-    model_adapter.train_model(model=model)
-
-
-def predict_test(model: dl.Model):
-    model_adapter = ModelAdapter(model_entity=model)
-    item = dl.items.get(item_id='645cc2de66671c2da8908f3a')
-    result = model_adapter.predict_items(items=[item])
-
-    item_list = result[0]
-    item = item_list[0]
-    annotations = item.annotations.list()
-    label = annotations[0].label
-    print(f"Predicted label: {label}")
-
-
-def main_check_model():
-    model = dl.models.get(model_id='645f9b256e76507c009c8f95')
-    train_test(model=model)
-    # predict_test(model=model)
 
 
 if __name__ == "__main__":
-    main_deployment()
-    # main_check_model()
+    main()
+
+    # Useful link:
+    # https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
