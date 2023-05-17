@@ -37,10 +37,10 @@ class CNN(nn.Module):
             self.spatial_dropout = nn.Dropout2d(p=0.2)
         # FC layers - since we use global avg pooling,
         # input to the FC layer = #output_features of the second conv layer
-        self.fc1 = nn.Linear(32, 256)
+        self.fc1 = nn.Linear(in_features=32, out_features=256)
         if self.use_dropout:
             self.dropout = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(256, output_size)
+        self.fc2 = nn.Linear(in_features=256, out_features=output_size)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window

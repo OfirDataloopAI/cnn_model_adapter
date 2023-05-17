@@ -189,7 +189,6 @@ def package_creation(project: dl.Project):
     module = dl.PackageModule.from_entry_point(entry_point='cnn_adapter.py')
     package = project.packages.push(package_name='cnn',
                                     src_path=os.getcwd(),
-                                    # description='CNN implemented in pytorch',
                                     is_global=False,
                                     package_type='ml',
                                     codebase=dl.GitCodebase(
@@ -217,12 +216,27 @@ def package_creation(project: dl.Project):
     return package
 
 
-def model_creation(package: dl.Package, project: dl.Project):
-    labels = list()
-    for i in range(10):
-        labels.append(str(i))
+def dql_filters():
+    train_filter = dl.Filters()
+    validation_filter = dl.Filters()
 
+    train_paths = ["/training/{}".format(i) for i in range(10)]
+    validation_paths = ["/validation/{}".format(i) for i in range(10)]
+
+    train_filter.add(field=dl.FiltersKnownFields.DIR,
+                     values=train_paths,
+                     operator=dl.FiltersOperations.IN.value)
+    validation_filter.add(field=dl.FiltersKnownFields.DIR,
+                          values=validation_paths,
+                          operator=dl.FiltersOperations.IN.value)
+
+    return train_filter, validation_filter
+
+
+def model_creation(package: dl.Package, project: dl.Project):
+    labels = [str(i) for i in range(10)]
     dataset = project.datasets.get(dataset_name="MNIST_Dataset")
+    train_filter, validation_filter = dql_filters()
 
     model = package.models.create(model_name='cnn',
                                   description='cnn-model for testing',
@@ -240,7 +254,9 @@ def model_creation(package: dl.Package, project: dl.Project):
                                                  }},
                                   project_id=project.id,
                                   labels=labels,
-                                  )
+                                  train_filter=train_filter,
+                                  validation_filter=validation_filter)
+
     return model
 
 
@@ -250,7 +266,7 @@ def main_deployment():
     package_creation(project=project)
     package = project.packages.get(package_name='cnn')
     package.artifacts.list()
-    # model_creation(package=package, project=project)
+    model_creation(package=package, project=project)
 
     # Useful:
     # https://github.com/dataloop-ai/pytorch_adapters/blob/mgmt3/resnet_adapter.py
@@ -283,5 +299,5 @@ def main_check_model():
 
 
 if __name__ == "__main__":
-    # main_deployment()
-    main_check_model()
+    main_deployment()
+    # main_check_model()
