@@ -21,7 +21,11 @@ def predict_test(model: dl.Model):
 
 def main():
     model = dl.models.get(model_id='645f9b256e76507c009c8f95')
+
+    # Model Training
     train_test(model=model)
+
+    # Model Predict
     # predict_test(model=model)
 
 

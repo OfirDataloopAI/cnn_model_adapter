@@ -279,11 +279,12 @@ def model_creation(package: dl.Package, project: dl.Project):
 
 
 def main():
-    dl.setenv('prod')
     project = dl.projects.get(project_name='Abeer N Ofir Project')
 
+    # Package Creation
     package_creation(project=project)
 
+    # Model Creation
     package = project.packages.get(package_name='cnn')
     model_creation(package=package, project=project)
 
