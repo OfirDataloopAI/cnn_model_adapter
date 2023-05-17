@@ -285,8 +285,8 @@ def main():
     package_creation(project=project)
 
     # Model Creation
-    package = project.packages.get(package_name='cnn')
-    model_creation(package=package, project=project)
+    # package = project.packages.get(package_name='cnn')
+    # model_creation(package=package, project=project)
 
 
 if __name__ == "__main__":

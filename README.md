@@ -23,10 +23,17 @@ Add DQL Filters for the train and validation images paths on the Dataloop platfo
 
 ### How to deploy the package:
 
+From function `package_creation` in [cnn_adapter.py](cnn_adapter.py)
+
 ### How to deploy the model:
+
+From function `model_creation` in [cnn_adapter.py](cnn_adapter.py)
 
 ### How to test locally:
 
+From functions `train_test` and `predict_test` in [cnn_adapter_tests.py](cnn_adapter_tests.py)
+
+And from function `local_training`, `local_testing` and `local_predict` in [cnn_model.py](cnn_model.py)
 
 ### Model functions:
 
