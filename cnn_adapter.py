@@ -109,11 +109,27 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         self.model = cnn_model.CNN(output_size=output_size,
                                    use_dropout=True).to(self.device)
-        cnn_model.train_model(model=self.model,
-                              device=self.device,
-                              hyper_parameters=hyper_parameters,
-                              dataloaders=dataloaders,
-                              output_path=output_path)
+        train_results = cnn_model.train_model(model=self.model,
+                                              device=self.device,
+                                              hyper_parameters=hyper_parameters,
+                                              dataloaders=dataloaders,
+                                              output_path=output_path)
+
+        #TODO: Upload metric
+
+        # num_epochs = hyper_parameters.get("num_epochs", 50)
+        # for epoch in range(num_epochs):
+        #     for phase in ["'train", "valid"]:
+        #         self.model_entity.add_log_samples(samples=dl.LogSample(figure='loss',
+        #                                                                legend=phase,
+        #                                                                x=epoch,
+        #                                                                y=train_results[phase]["loss"][epoch]),
+        #                                           dataset_id=self.model_entity.dataset_id)
+        #         self.model_entity.add_log_samples(samples=dl.LogSample(figure='accuracy',
+        #                                                                legend=phase,
+        #                                                                x=epoch,
+        #                                                                y=train_results[phase]["accuracy"][epoch]),
+        #                                           dataset_id=self.model_entity.dataset_id)
 
         logger.info("Model trained successfully")
 
@@ -261,11 +277,11 @@ def predict_test(model: dl.Model):
 
 
 def main_check_model():
-    model = dl.models.get(model_id='645d07073375a543ee8c355e')
+    model = dl.models.get(model_id='645f9b256e76507c009c8f95')
     train_test(model=model)
     # predict_test(model=model)
 
 
 if __name__ == "__main__":
-    main_deployment()
-    # main_check_model()
+    # main_deployment()
+    main_check_model()
