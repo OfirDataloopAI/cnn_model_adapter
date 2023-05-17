@@ -1,6 +1,11 @@
-# Convolutional Neural Network (CNN)
+# Convolutional Neural Network (CNN) with Adapter to Dataloop
 
 ![cnn.png](images%2Fcnn.png)
+
+A simple CNN model with an adapter to support deployment and execution of the model in the Dataloop platform.
+
+
+### The CNN Model:
 
 A simple CNN model with the following architecture:
 1. Convolution (in_channels=1, out_channels=64, kernel_size=5)
@@ -14,18 +19,16 @@ A simple CNN model with the following architecture:
 
 Deploy MNIST_Dataset to the project.
 
-Add DQL Filters for the train and validation images. 
+Add DQL Filters for the train and validation images paths on the Dataloop platform. 
 
-### How to Run:
+### How to deploy the package:
+
+### How to deploy the model:
+
+### How to test locally:
 
 
-
-### Flow:
-
-
-### Model Information:
-
-#### Model functions:
+### Model functions:
 
 `train`
 `predict`
@@ -35,4 +38,3 @@ Add DQL Filters for the train and validation images.
 
 See [requirements.txt](requirements.txt)
 
-### How to deploy:
