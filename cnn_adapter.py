@@ -198,7 +198,7 @@ def package_creation(project: dl.Project):
         codebase=dl.GitCodebase(
             type=dl.PackageCodebaseType.GIT,
             git_url='https://github.com/OfirDataloopAI/cnn_model_adapter',
-            git_tag='v12'
+            git_tag='v13'
         ),
         modules=[module],
         service_config={
