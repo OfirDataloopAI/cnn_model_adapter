@@ -235,6 +235,7 @@ def package_creation(project: dl.Project):
         service_config={
             'runtime': dl.KubernetesRuntime(
                 pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
+                #TODO: check different image
                 runner_image='gcr.io/viewo-g/modelmgmt/resnet:0.0.7',
                 autoscaler=dl.KubernetesRabbitmqAutoscaler(
                     min_replicas=0,
