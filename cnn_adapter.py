@@ -116,6 +116,37 @@ class ModelAdapter(dl.BaseModelAdapter):
                                               output_path=output_path)
 
         #TODO: Upload metric
+        import matplotlib.pyplot as plt
+
+        samples = list()
+
+        # plt.title("CNN Loss:")
+        # plt.plot(train_results["epochs"], train_results["train"]["loss"], label="Train")
+        # plt.plot(train_results["epochs"], train_results["valid"]["loss"], label="Validation")
+        # plt.xlabel("Number of epochs")
+        # plt.ylabel("Loss")
+        # plt.legend()
+
+        # samples.append(dl.PlotSample(figure="loss",
+        #                              legend='train',
+        #                              x=train_results["epochs"],
+        #                              y=train_results["train"]["loss"]))
+
+        # plt.clf()
+        # plt.title("CNN Accuracy:")
+        # plt.plot(train_results["epochs"], train_results["train"]["accuracy"], label="Train")
+        # plt.plot(train_results["epochs"], train_results["valid"]["accuracy"], label="Validation")
+        # plt.xlabel("Number of epochs")
+        # plt.ylabel("Accuracy")
+        # plt.legend()
+
+        # samples.append(dl.PlotSample(figure="accuracy",
+        #                              legend='train',
+        #                              x=train_results["epochs"],
+        #                              y=train_results["train"]["accuracy"]))
+
+
+
 
         # num_epochs = hyper_parameters.get("num_epochs", 50)
         # for epoch in range(num_epochs):
