@@ -96,18 +96,8 @@ class ModelAdapter(dl.BaseModelAdapter):
                                               output_path=output_path,
                                               dataloader_option=dataloader_option)
 
-        # TODO: Upload metric
-        import matplotlib.pyplot as plt
-
+        # TODO: Save weights to artifacts
         samples = list()
-
-        # plt.title("CNN Loss:")
-        # plt.plot(train_results["epochs"], train_results["train"]["loss"], label="Train")
-        # plt.plot(train_results["epochs"], train_results["valid"]["loss"], label="Validation")
-        # plt.xlabel("Number of epochs")
-        # plt.ylabel("Loss")
-        # plt.legend()
-
         for epoch in train_results["epochs"]:
             samples.append(dl.PlotSample(figure="train loss", legend='loss', x=epoch,
                                          y=train_results["train"]["loss"][epoch]))
@@ -122,36 +112,6 @@ class ModelAdapter(dl.BaseModelAdapter):
                                          y=train_results["valid"]["accuracy"][epoch]))
 
         self.model_entity.metrics.create(samples=samples, dataset_id=self.model_entity.dataset_id)
-
-        # plt.clf()
-        # plt.title("CNN Accuracy:")
-        # plt.plot(train_results["epochs"], train_results["train"]["accuracy"], label="Train")
-        # plt.plot(train_results["epochs"], train_results["valid"]["accuracy"], label="Validation")
-        # plt.xlabel("Number of epochs")
-        # plt.ylabel("Accuracy")
-        # plt.legend()
-
-        # samples.append(dl.PlotSample(figure="accuracy",
-        #                              legend='train',
-        #                              x=train_results["epochs"],
-        #                              y=train_results["train"]["accuracy"]))
-
-
-
-
-        # num_epochs = hyper_parameters.get("num_epochs", 50)
-        # for epoch in range(num_epochs):
-        #     for phase in ["'train", "valid"]:
-        #         self.model_entity.add_log_samples(samples=dl.LogSample(figure='loss',
-        #                                                                legend=phase,
-        #                                                                x=epoch,
-        #                                                                y=train_results[phase]["loss"][epoch]),
-        #                                           dataset_id=self.model_entity.dataset_id)
-        #         self.model_entity.add_log_samples(samples=dl.LogSample(figure='accuracy',
-        #                                                                legend=phase,
-        #                                                                x=epoch,
-        #                                                                y=train_results[phase]["accuracy"][epoch]),
-        #                                           dataset_id=self.model_entity.dataset_id)
 
         logger.info("Model trained successfully")
 
@@ -258,7 +218,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v16"
+    git_tag = "v17"
     # TODO: check different image
     docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")

@@ -154,7 +154,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
                 # Total loss of the mini batch
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data).cpu()
+                running_corrects += torch.sum(preds == labels.data).cpu().item()
 
             # Saving epoch loss and accuracy
             epoch_loss = running_loss / dataset_size
@@ -165,7 +165,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
             # Saving the weights of the best epoch
             if epoch_accuracy > optimal_val_accuracy:
                 optimal_val_epoch = epoch
-                optimal_val_accuracy = epoch_accuracy.item()
+                optimal_val_accuracy = epoch_accuracy
                 cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
                 cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
