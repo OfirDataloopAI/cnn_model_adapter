@@ -99,16 +99,16 @@ class ModelAdapter(dl.BaseModelAdapter):
         # TODO: Save weights to artifacts
         samples = list()
         for epoch in train_results["epochs"]:
-            samples.append(dl.PlotSample(figure="train loss", legend='loss', x=epoch,
+            samples.append(dl.PlotSample(figure="Loss", legend="train loss", x=epoch,
                                          y=train_results["train"]["loss"][epoch]))
 
-            samples.append(dl.PlotSample(figure="valid loss", legend='loss', x=epoch,
+            samples.append(dl.PlotSample(figure="Loss", legend="valid loss", x=epoch,
                                          y=train_results["valid"]["loss"][epoch]))
 
-            samples.append(dl.PlotSample(figure="train accuracy", legend='accuracy', x=epoch,
+            samples.append(dl.PlotSample(figure="Accuracy", legend='train accuracy', x=epoch,
                                          y=train_results["train"]["accuracy"][epoch]))
 
-            samples.append(dl.PlotSample(figure="valid accuracy", legend='accuracy', x=epoch,
+            samples.append(dl.PlotSample(figure="Accuracy", legend='valid accuracy', x=epoch,
                                          y=train_results["valid"]["accuracy"][epoch]))
 
         self.model_entity.metrics.create(samples=samples, dataset_id=self.model_entity.dataset_id)
@@ -218,7 +218,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v17"
+    git_tag = "v18"
     # TODO: check different image
     docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
