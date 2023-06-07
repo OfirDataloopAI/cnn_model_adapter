@@ -172,6 +172,11 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 PATH = "model.pth"
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
 
+    results = "Optimal hyper parameters were found at:\n" \
+              "Epoch: {}\n" \
+              "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
+                                                   cnn_graph_data["optimal_val_accuracy"])
+    print(results)
     # plot_graph(cnn_graph_data)
     return cnn_graph_data
 
@@ -277,12 +282,6 @@ def plot_graph(cnn_graph_data: dict):
     plt.ylabel("Accuracy")
     plt.legend()
     plt.savefig("accuracy.png")
-
-    results = "Optimal hyper parameters were found at:\n" \
-              "Epoch: {}\n" \
-              "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
-                                                   cnn_graph_data["optimal_val_accuracy"])
-    print(results)
 
 
 # Model Training Local Test
