@@ -65,11 +65,8 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
-        if not self.model:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
-        else:
-            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
         print("Model Configuration:\n{}".format(self.configuration))
@@ -118,9 +115,8 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model trained successfully")
 
     def predict(self, batch: np.ndarray, **kwargs):
-        if not self.model:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         # TODO: PREDICT MODEL
         input_size = self.configuration.get("input_size", 28)
