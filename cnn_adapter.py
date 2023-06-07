@@ -108,10 +108,20 @@ class ModelAdapter(dl.BaseModelAdapter):
         # plt.ylabel("Loss")
         # plt.legend()
 
-        # samples.append(dl.PlotSample(figure="loss",
-        #                              legend='train',
-        #                              x=train_results["epochs"],
-        #                              y=train_results["train"]["loss"]))
+        for epoch in train_results["epochs"]:
+            samples.append(dl.PlotSample(figure="train loss", legend='loss', x=epoch,
+                                         y=train_results["train"]["loss"][epoch]))
+
+            samples.append(dl.PlotSample(figure="valid loss", legend='loss', x=epoch,
+                                         y=train_results["valid"]["loss"][epoch]))
+
+            samples.append(dl.PlotSample(figure="train accuracy", legend='accuracy', x=epoch,
+                                         y=train_results["train"]["accuracy"][epoch]))
+
+            samples.append(dl.PlotSample(figure="valid accuracy", legend='accuracy', x=epoch,
+                                         y=train_results["valid"]["accuracy"][epoch]))
+
+        self.model_entity.metrics.create(samples=samples, dataset_id=self.model_entity.dataset_id)
 
         # plt.clf()
         # plt.title("CNN Accuracy:")
