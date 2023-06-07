@@ -238,7 +238,7 @@ def package_creation(project: dl.Project):
             "hyper_parameters": {
                 "num_epochs": num_epochs,
                 "optimizer_lr": optimizer_lr,
-                "output_size": output_size,
+                "output_size": output_size
             }
         },
         output_type=dl.AnnotationType.CLASSIFICATION,
@@ -320,7 +320,7 @@ def model_creation(package: dl.Package, project: dl.Project):
             "hyper_parameters": {
                 "num_epochs": 50,
                 "optimizer_lr": 0.01,
-                "output_size": 10,
+                "output_size": 10
             }
         },
         project_id=project.id,
