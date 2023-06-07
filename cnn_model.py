@@ -80,7 +80,8 @@ def get_data_transforms(input_size):
     return data_transforms
 
 
-def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str):
+def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str,
+                dataloader_option: str = 'regular'):
     #########################
     # Load Hyper Parameters #
     #########################
@@ -130,11 +131,13 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
             # Looping over all the dataloader images
             for i, data in enumerate(dataloader, start=0):
                 # TODO: Add flag for: local test, and remote test
-                # inputs, labels = data
-                # inputs = inputs.to(device)
-                # labels = labels.to(device)
-                inputs = data["image"].to(device)
-                labels = data["annotations"].squeeze().to(device)
+                if dataloader_option == "regular":
+                    inputs, labels = data
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
+                else:
+                    inputs = data["image"].to(device)
+                    labels = data["annotations"].squeeze().to(device)
 
                 # zero the gradient
                 optimizer.zero_grad()
@@ -169,7 +172,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 PATH = "model.pth"
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
 
-    plot_graph(cnn_graph_data)
+    # plot_graph(cnn_graph_data)
     return cnn_graph_data
 
 

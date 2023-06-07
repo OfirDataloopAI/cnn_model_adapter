@@ -72,31 +72,8 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         # Create Dataloaders #
         ######################
-        input_size = self.configuration.get("input_size", 28)
-        data_transforms = cnn_model.get_data_transforms(input_size=input_size)
-
-        train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "train"),
-                                              dataset_entity=self.model_entity.dataset,
-                                              annotation_type=dl.AnnotationType.CLASSIFICATION,
-                                              transforms=data_transforms["train"],
-                                              id_to_label_map=self.model_entity.id_to_label_map,
-                                              class_balancing=True)
-
-        valid_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "validation"),
-                                              dataset_entity=self.model_entity.dataset,
-                                              annotation_type=dl.AnnotationType.CLASSIFICATION,
-                                              transforms=data_transforms["valid"],
-                                              id_to_label_map=self.model_entity.id_to_label_map)
-
-        batch_size = self.configuration.get("batch_size", 16)
-        dataloaders = {"train": DataLoader(dataset=train_dataset,
-                                           batch_size=batch_size,
-                                           shuffle=True,
-                                           collate_fn=collate_torch),
-                       "valid": DataLoader(dataset=valid_dataset,
-                                           batch_size=batch_size,
-                                           collate_fn=collate_torch,
-                                           shuffle=True)}
+        dataloader_option = "dataloop"
+        dataloaders = self.get_dataloaders(data_path=data_path, dataloader_option=dataloader_option)
 
         # TODO: TRAIN MODEL
         logger.info("Model started training")
@@ -113,9 +90,10 @@ class ModelAdapter(dl.BaseModelAdapter):
                                               device=self.device,
                                               hyper_parameters=hyper_parameters,
                                               dataloaders=dataloaders,
-                                              output_path=output_path)
+                                              output_path=output_path,
+                                              dataloader_option=dataloader_option)
 
-        #TODO: Upload metric
+        # TODO: Upload metric
         import matplotlib.pyplot as plt
 
         samples = list()
@@ -198,6 +176,43 @@ class ModelAdapter(dl.BaseModelAdapter):
         """
 
         ...
+
+    def get_dataloaders(self, data_path, dataloader_option: str = "regular"):
+        input_size = self.configuration.get("input_size", 28)
+        batch_size = self.configuration.get("batch_size", 16)
+        data_transforms = cnn_model.get_data_transforms(input_size=input_size)
+
+        if dataloader_option == "regular":
+            return True
+            # dataloaders = {
+            #     "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
+            #     "valid": torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, num_workers=2)
+            # }
+        else:
+            train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "train"),
+                                                  dataset_entity=self.model_entity.dataset,
+                                                  annotation_type=dl.AnnotationType.CLASSIFICATION,
+                                                  transforms=data_transforms["train"],
+                                                  id_to_label_map=self.model_entity.id_to_label_map,
+                                                  class_balancing=True)
+
+            valid_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "validation"),
+                                                  dataset_entity=self.model_entity.dataset,
+                                                  annotation_type=dl.AnnotationType.CLASSIFICATION,
+                                                  transforms=data_transforms["valid"],
+                                                  id_to_label_map=self.model_entity.id_to_label_map)
+
+            dataloaders = {
+                "train": DataLoader(dataset=train_dataset,
+                                    batch_size=batch_size,
+                                    shuffle=True,
+                                    collate_fn=collate_torch),
+                "valid": DataLoader(dataset=valid_dataset,
+                                    batch_size=batch_size,
+                                    collate_fn=collate_torch,
+                                    shuffle=True)
+            }
+        return dataloaders
 
 
 ####################
