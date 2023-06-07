@@ -68,6 +68,8 @@ class ModelAdapter(dl.BaseModelAdapter):
         if not self.model:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+        else:
+            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
         print("Model Configuration:\n{}".format(self.configuration))
@@ -218,7 +220,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v18"
+    git_tag = "v19"
     # TODO: check different image
     docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
