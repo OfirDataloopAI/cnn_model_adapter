@@ -258,7 +258,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v15"
+    git_tag = "v16"
     # TODO: check different image
     docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
