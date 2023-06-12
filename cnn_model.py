@@ -133,7 +133,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 # TODO: Add flag for: local test, and remote test
                 if dataloader_option == "regular":
                     inputs, labels = data
-                    inputs = inputs.to(device)
+                    inputs = inputs.to(device).float()
                     labels = labels.to(device)
                 else:
                     inputs = data["image"].to(device)
