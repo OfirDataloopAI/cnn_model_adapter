@@ -288,7 +288,7 @@ def package_creation(project: dl.Project):
         "batch_size": 16,
         "input_size": 28,
         "hyper_parameters": {
-            "num_epochs": 5,
+            "num_epochs": 50,
             "optimizer_lr": 0.01,
             "output_size": 10
         }
