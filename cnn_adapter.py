@@ -236,7 +236,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         data_transforms = cnn_model.get_data_transforms(input_size=input_size)
 
         if dataloader_option == "regular":
-            dataloaders = self.custom_dataloaders(data_path)
+            dataloaders = self.custom_dataloaders(data_path=data_path)
         else:
             train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "train"),
                                                   dataset_entity=self.model_entity.dataset,
