@@ -165,13 +165,14 @@ class ModelAdapter(dl.BaseModelAdapter):
         def convert_image_filepaths_to_arrays(image_filepaths):
             image_list = list()
             input_size = self.configuration["input_size"]
+            black_white_threshold = 100
 
             for image_filepath in image_filepaths:
                 image = Image.open(fp=image_filepath)
                 image_array = np.array(image)
                 image_array = image_array.astype(float)
-                image_array[image_array < 128] = -1.0
-                image_array[image_array >= 128] = 1.0
+                image_array[image_array < black_white_threshold] = -1.0
+                image_array[image_array >= black_white_threshold] = 1.0
                 image_array.resize((1, input_size, input_size))
                 image_list.append(image_array)
                 image.close()
@@ -278,7 +279,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v20"
+    git_tag = "v21"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
