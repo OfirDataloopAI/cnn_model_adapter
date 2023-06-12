@@ -164,9 +164,12 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         def convert_image_filepaths_to_arrays(image_filepaths):
             image_list = list()
+            input_size = self.configuration["input_size"]
+
             for image_filepath in image_filepaths:
-                image = Image.open(image_filepath)
+                image = Image.open(fp=image_filepath)
                 image_array = np.array(image)
+                image_array.resize((1, input_size, input_size))
                 image_list.append(image_array)
                 image.close()
             return image_list
