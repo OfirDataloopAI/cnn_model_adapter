@@ -1,20 +1,16 @@
-# from torch.utils.data import DataLoader
-from imgaug import augmenters as iaa
-import torchvision.transforms
-# import torch.optim as optim
-import torch.nn.functional
-# import pandas as pd
+# from imgaug import augmenters as iaa
+import json
+
+from PIL import Image
 import numpy as np
 import dtlpy as dl
 import torch.nn
 import logging
 import torch
-# import time
-# import copy
-# import tqdm
 import os
+import re
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from dtlpy.utilities.dataset_generators.dataset_generator import collate_torch
 from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
@@ -39,7 +35,7 @@ class ModelAdapter(dl.BaseModelAdapter):
             if isinstance(model_entity, dict) and "model_id" in model_entity:
                 model_entity = dl.models.get(model_id=model_entity["model_id"])
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # TODO: GET MODEL
         self.model = cnn_model.CNN(use_dropout=True).to(self.device)
@@ -66,7 +62,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
     def train(self, data_path: str, output_path: str, **kwargs):
         # Reset model for training
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
@@ -75,7 +71,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         # Create Dataloaders #
         ######################
-        dataloader_option = "dataloop"
+        dataloader_option = "regular"
         dataloaders = self.get_dataloaders(data_path=data_path, dataloader_option=dataloader_option)
 
         # TODO: TRAIN MODEL
@@ -116,7 +112,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model trained successfully")
 
     def predict(self, batch: np.ndarray, **kwargs):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         # TODO: PREDICT MODEL
@@ -149,12 +145,94 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         ...
 
+    @staticmethod
+    def custom_dataloaders(data_path: str):
+        def get_image_filepaths(directory):
+            image_filepaths = list()
+            for root, dirs, files in os.walk(directory):
+                for file in files:
+                    if file.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
+                        image_filepaths.append(os.path.join(root, file))
+            return image_filepaths
+
+        def get_json_filepaths(directory):
+            json_filepaths = list()
+            for root, dirs, files in os.walk(directory):
+                for file in files:
+                    if file.lower().endswith('.json'):
+                        json_filepaths.append(os.path.join(root, file))
+            return json_filepaths
+
+        def convert_image_filepaths_to_arrays(image_filepaths):
+            image_list = list()
+            for image_filepath in image_filepaths:
+                image = Image.open(image_filepath)
+                image_array = np.array(image)
+                image_list.append(image_array)
+                image.close()
+            return image_list
+
+        def convert_json_filepaths_to_labels(json_filepaths):
+            label_list = list()
+            for json_filepath in json_filepaths:
+                json_file = open(file=json_filepath, mode="r")
+                json_data = json.load(fp=json_file)
+                label = int(json_data["annotations"][0]["label"])
+                label_list.append(label)
+            return label_list
+
+        # Get data directories
+        train_directory = os.path.join(data_path, "train")
+        valid_directory = os.path.join(data_path, "validation")
+
+        # Get all filepaths
+        train_image_filepaths = get_image_filepaths(train_directory)
+        train_json_files = get_json_filepaths(train_directory)
+        valid_image_filepaths = get_image_filepaths(valid_directory)
+        valid_json_files = get_json_filepaths(valid_directory)
+
+        # Sorting files
+        def sort_regex(x):
+            ext = x.split('.')[-1]
+            return int(re.search(r'img_(\w+).{}'.format(ext), x).group(1))
+
+        train_image_filepaths.sort(key=lambda x: sort_regex(x))
+        train_json_files.sort(key=lambda x: sort_regex(x))
+        valid_image_filepaths.sort(key=lambda x: sort_regex(x))
+        valid_json_files.sort(key=lambda x: sort_regex(x))
+
+        # Extracting data
+        train_image_data = convert_image_filepaths_to_arrays(image_filepaths=train_image_filepaths)
+        train_image_labels = convert_json_filepaths_to_labels(json_filepaths=train_json_files)
+        valid_image_data = convert_image_filepaths_to_arrays(image_filepaths=valid_image_filepaths)
+        valid_image_labels = convert_json_filepaths_to_labels(json_filepaths=valid_json_files)
+
+        print("Image Files:")
+        # print(image_files)
+        # print("\nJSON Files:")
+        # print(json_files)
+
     def get_dataloaders(self, data_path, dataloader_option: str = "regular"):
         input_size = self.configuration.get("input_size", 28)
         batch_size = self.configuration.get("batch_size", 16)
         data_transforms = cnn_model.get_data_transforms(input_size=input_size)
 
         if dataloader_option == "regular":
+            # Custom Dataset Creation
+            class Custom_Dataset(Dataset):
+                def __init__(self, dataset):
+                    self.dataset = dataset
+                    self.length = len(self.dataset)
+
+                def __len__(self):
+                    return self.length
+
+                def __getitem__(self, idx):
+                    image, label = self.dataset[idx]
+                    return image, label
+
+            self.custom_dataloaders(data_path)
+
             return True
             # dataloaders = {
             #     "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
@@ -195,8 +273,6 @@ def package_creation(project: dl.Project):
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
     git_tag = "v20"
-    # TODO: check different image
-    docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
@@ -210,6 +286,20 @@ def package_creation(project: dl.Project):
             "output_size": 10
         }
     }
+
+    # Service Kubernetes Parameters
+    # TODO: Verify that the correct image is in use
+    service_config = {
+        "runtime": dl.KubernetesRuntime(
+            pod_type=dl.INSTANCE_CATALOG_GPU_K80_S,
+            runner_image="gcr.io/viewo-g/modelmgmt/resnet:0.0.7",
+            autoscaler=dl.KubernetesRabbitmqAutoscaler(
+                min_replicas=0,
+                max_replicas=1
+            ),
+            concurrency=1
+        ).to_json()
+    },
 
     # Package Metadata
     metadata = dl.Package.get_ml_metadata(
@@ -230,17 +320,7 @@ def package_creation(project: dl.Project):
             git_tag=git_tag
         ),
         modules=[module],
-        service_config={
-            "runtime": dl.KubernetesRuntime(
-                pod_type=dl.INSTANCE_CATALOG_HIGHMEM_L,
-                runner_image=docker_image,
-                autoscaler=dl.KubernetesRabbitmqAutoscaler(
-                    min_replicas=0,
-                    max_replicas=1
-                ),
-                concurrency=1
-            ).to_json()
-        },
+        service_config=service_config,
         metadata=metadata
     )
 
