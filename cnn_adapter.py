@@ -145,8 +145,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         ...
 
-    @staticmethod
-    def custom_dataloaders(data_path: str):
+    def custom_dataloaders(self, data_path: str):
         def get_image_filepaths(directory):
             image_filepaths = list()
             for root, dirs, files in os.walk(directory):
@@ -207,10 +206,29 @@ class ModelAdapter(dl.BaseModelAdapter):
         valid_image_data = convert_image_filepaths_to_arrays(image_filepaths=valid_image_filepaths)
         valid_image_labels = convert_json_filepaths_to_labels(json_filepaths=valid_json_files)
 
-        print("Image Files:")
-        # print(image_files)
-        # print("\nJSON Files:")
-        # print(json_files)
+        # Custom Dataset Creation
+        class CustomDataset(Dataset):
+            def __init__(self, data_list, labels_list):
+                self.dataset = [(data, label) for data, label in zip(data_list, labels_list)]
+                self.length = len(self.dataset)
+
+            def __len__(self):
+                return self.length
+
+            def __getitem__(self, idx):
+                image, label = self.dataset[idx]
+                return image, label
+
+        train_dataset = CustomDataset(train_image_data, train_image_labels)
+        valid_dataset = CustomDataset(valid_image_data, valid_image_labels)
+
+        batch_size = self.configuration["batch_size"]
+        dataloaders = {
+            "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
+            "valid": torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, num_workers=2)
+        }
+
+        return dataloaders
 
     def get_dataloaders(self, data_path, dataloader_option: str = "regular"):
         input_size = self.configuration.get("input_size", 28)
@@ -218,26 +236,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         data_transforms = cnn_model.get_data_transforms(input_size=input_size)
 
         if dataloader_option == "regular":
-            # Custom Dataset Creation
-            class Custom_Dataset(Dataset):
-                def __init__(self, dataset):
-                    self.dataset = dataset
-                    self.length = len(self.dataset)
-
-                def __len__(self):
-                    return self.length
-
-                def __getitem__(self, idx):
-                    image, label = self.dataset[idx]
-                    return image, label
-
-            self.custom_dataloaders(data_path)
-
-            return True
-            # dataloaders = {
-            #     "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
-            #     "valid": torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, num_workers=2)
-            # }
+            dataloaders = self.custom_dataloaders(data_path)
         else:
             train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "train"),
                                                   dataset_entity=self.model_entity.dataset,
@@ -262,6 +261,7 @@ class ModelAdapter(dl.BaseModelAdapter):
                                     collate_fn=collate_torch,
                                     shuffle=True)
             }
+
         return dataloaders
 
 
