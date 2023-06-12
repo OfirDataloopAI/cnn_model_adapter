@@ -65,6 +65,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
+        # Reset model for training
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
@@ -190,29 +191,6 @@ class ModelAdapter(dl.BaseModelAdapter):
 # Package Creation #
 ####################
 def package_creation(project: dl.Project):
-    weights_filename_path = "model.pth"
-    batch_size = 16
-    input_size = 28
-    num_epochs = 50
-    optimizer_lr = 0.01
-    output_size = 10
-
-    # Package Metadata
-    metadata = dl.Package.get_ml_metadata(
-        cls=ModelAdapter,
-        default_configuration={
-            "weights_filename": weights_filename_path,
-            "batch_size": batch_size,
-            "input_size": input_size,
-            "hyper_parameters": {
-                "num_epochs": num_epochs,
-                "optimizer_lr": optimizer_lr,
-                "output_size": output_size
-            }
-        },
-        output_type=dl.AnnotationType.CLASSIFICATION,
-    )
-
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
@@ -220,6 +198,25 @@ def package_creation(project: dl.Project):
     # TODO: check different image
     docker_image = "gcr.io/viewo-g/modelmgmt/resnet:0.0.7"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
+
+    # Default Hyper Parameters
+    default_configuration = {
+        "weights_filename": "model.pth",
+        "batch_size": 16,
+        "input_size": 28,
+        "hyper_parameters": {
+            "num_epochs": 5,
+            "optimizer_lr": 0.01,
+            "output_size": 10
+        }
+    }
+
+    # Package Metadata
+    metadata = dl.Package.get_ml_metadata(
+        cls=ModelAdapter,
+        default_configuration=default_configuration,
+        output_type=dl.AnnotationType.CLASSIFICATION
+    )
 
     # Package Creation
     package = project.packages.push(
@@ -271,27 +268,36 @@ def dql_filters():
 
 
 def model_creation(package: dl.Package, project: dl.Project):
-    labels = [str(i) for i in range(10)]
+    model_name = "cnn model"
+    description = "cnn model for MNIST dataset"
+    tags = ["pretrained", "MNIST"]
     dataset = project.datasets.get(dataset_name="MNIST_Dataset")
+
+    # Hyper Parameters
+    configuration = {
+        "weights_filename": "model.pth",
+        "batch_size": 16,
+        "input_size": 28,
+        "hyper_parameters": {
+            "num_epochs": 50,
+            "optimizer_lr": 0.01,
+            "output_size": 10
+        }
+    }
+
+    # Labels and Filters
+    labels = [str(i) for i in range(10)]
     train_filter, validation_filter = dql_filters()
 
+    # Model Creation
     model = package.models.create(
-        model_name="cnn",
-        description="cnn-model for MNIST dataset",
-        tags=["pretrained", "MNIST"],
+        model_name=model_name,
+        description=description,
+        tags=tags,
         dataset_id=dataset.id,
-        scope="public",
+        scope="private",
         status="created",
-        configuration={
-            "weights_filename": "model.pth",
-            "batch_size": 16,
-            "input_size": 28,
-            "hyper_parameters": {
-                "num_epochs": 50,
-                "optimizer_lr": 0.01,
-                "output_size": 10
-            }
-        },
+        configuration=configuration,
         project_id=project.id,
         labels=labels,
         train_filter=train_filter,
