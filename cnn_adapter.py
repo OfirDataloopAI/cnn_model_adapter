@@ -169,6 +169,9 @@ class ModelAdapter(dl.BaseModelAdapter):
             for image_filepath in image_filepaths:
                 image = Image.open(fp=image_filepath)
                 image_array = np.array(image)
+                image_array = image_array.astype(float)
+                image_array[image_array < 128] = -1.0
+                image_array[image_array >= 128] = 1.0
                 image_array.resize((1, input_size, input_size))
                 image_list.append(image_array)
                 image.close()
