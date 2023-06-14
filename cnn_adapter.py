@@ -1,4 +1,3 @@
-# from imgaug import augmenters as iaa
 import dtlpy as dl
 import os
 import re
@@ -53,10 +52,14 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
-        # TODO: SAVE MODEL
         weights_filename = kwargs.get("weights_filename", "model.pth")
-        torch.save(self.model, os.path.join(local_path, weights_filename))
-        self.configuration["weights_filename"] = weights_filename
+        self.model_entity.artifacts.upload(os.path.join(local_path, "*"))
+        self.configuration.update({"weights_filename": weights_filename})
+
+        # TODO: SAVE MODEL
+        # weights_filename = kwargs.get("weights_filename", "model.pth")
+        # torch.save(self.model, os.path.join(local_path, weights_filename))
+        # self.configuration["weights_filename"] = weights_filename
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
@@ -129,9 +132,10 @@ class ModelAdapter(dl.BaseModelAdapter):
         return batch_annotations
 
     def convert_from_dtlpy(self, data_path, **kwargs):
-        """ Convert Dataloop structure data to model structured
-            Virtual method - need to implement
-            e.g. take dlp dir structure and construct annotation file
+        """
+        Convert Dataloop structure data to model structured
+        Virtual method - need to implement
+        e.g. take dlp dir structure and construct annotation file
         :param data_path: `str` local File System directory path where
                            we already downloaded the data from dataloop platform
         :return:

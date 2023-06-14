@@ -1,4 +1,3 @@
-# from imgaug import augmenters as iaa
 import logging
 import os
 import copy
@@ -76,7 +75,7 @@ def get_data_transforms(input_size):
 
 
 def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str,
-                dataloader_option: str = 'regular'):
+                dataloader_option: str = 'custom'):
     #########################
     # Load Hyper Parameters #
     #########################
@@ -125,14 +124,16 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
             # Looping over all the dataloader images
             for i, data in enumerate(dataloader, start=0):
-                # TODO: Add flag for: local test, and remote test
-                if dataloader_option == "regular":
+                # TODO: Make sure to use the correct dataloader_option
+                if dataloader_option == "custom":
                     inputs, labels = data
                     inputs = inputs.to(device).float()
                     labels = labels.to(device)
-                else:
+                elif dataloader_option == "dataloop":
                     inputs = data["image"].to(device)
                     labels = data["annotations"].squeeze().to(device)
+                else:
+                    raise Exception("Invalid dataloader_option selected")
 
                 # zero the gradient
                 optimizer.zero_grad()
@@ -164,7 +165,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
                 cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
-                PATH = "model.pth"
+                PATH = "{}.model.pth".format(output_path)
                 torch.save(copy.deepcopy(model.state_dict()), PATH)
 
     results = "Optimal hyper parameters were found at:\n" \
