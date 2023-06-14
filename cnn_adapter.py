@@ -138,6 +138,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         ...
 
+    # dataloader_option="custom"
     def custom_dataloaders(self, data_path: str):
         def get_image_filepaths(directory):
             image_filepaths = list()
@@ -227,42 +228,52 @@ class ModelAdapter(dl.BaseModelAdapter):
             "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
             "valid": torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, num_workers=2)
         }
-
         return dataloaders
 
-    def get_dataloaders(self, data_path, dataloader_option: str = "regular"):
+    # dataloader_option="dataloop"
+    def dataloop_dataloader(self, data_path: str):
         input_size = self.configuration.get("input_size", 28)
         batch_size = self.configuration.get("batch_size", 16)
         data_transforms = cnn_model.get_data_transforms(input_size=input_size)
 
-        if dataloader_option == "regular":
-            dataloaders = self.custom_dataloaders(data_path=data_path)
-        else:
-            train_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "train"),
-                                                  dataset_entity=self.model_entity.dataset,
-                                                  annotation_type=dl.AnnotationType.CLASSIFICATION,
-                                                  transforms=data_transforms["train"],
-                                                  id_to_label_map=self.model_entity.id_to_label_map,
-                                                  class_balancing=True)
+        train_dataset = DatasetGeneratorTorch(
+            data_path=os.path.join(data_path, "train"),
+            dataset_entity=self.model_entity.dataset,
+            annotation_type=dl.AnnotationType.CLASSIFICATION,
+            transforms=data_transforms["train"],
+            id_to_label_map=self.model_entity.id_to_label_map,
+            class_balancing=True
+        )
 
-            valid_dataset = DatasetGeneratorTorch(data_path=os.path.join(data_path, "validation"),
-                                                  dataset_entity=self.model_entity.dataset,
-                                                  annotation_type=dl.AnnotationType.CLASSIFICATION,
-                                                  transforms=data_transforms["valid"],
-                                                  id_to_label_map=self.model_entity.id_to_label_map)
-
-            dataloaders = {
-                "train": DataLoader(dataset=train_dataset,
-                                    batch_size=batch_size,
-                                    shuffle=True,
-                                    collate_fn=collate_torch),
-                "valid": DataLoader(dataset=valid_dataset,
-                                    batch_size=batch_size,
-                                    collate_fn=collate_torch,
-                                    shuffle=True)
-            }
-
+        valid_dataset = DatasetGeneratorTorch(
+            data_path=os.path.join(data_path, "validation"),
+            dataset_entity=self.model_entity.dataset,
+            annotation_type=dl.AnnotationType.CLASSIFICATION,
+            transforms=data_transforms["valid"],
+            id_to_label_map=self.model_entity.id_to_label_map
+        )
+        dataloaders = {
+            "train": DataLoader(
+                dataset=train_dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                collate_fn=collate_torch
+            ),
+            "valid": DataLoader(
+                dataset=valid_dataset,
+                batch_size=batch_size,
+                collate_fn=collate_torch,
+                shuffle=True
+            )
+        }
         return dataloaders
+
+    def get_dataloaders(self, data_path, dataloader_option: str = "custom"):
+        dataloader_options = {
+            "custom": self.custom_dataloaders,
+            "dataloop": self.dataloop_dataloader
+        }
+        return dataloader_options[dataloader_option](data_path=data_path)
 
 
 ####################
@@ -278,7 +289,7 @@ def package_creation(project: dl.Project):
     # Default Hyper Parameters
     default_configuration = {
         "weights_filename": "model.pth",
-        "dataloader_option": "regular",
+        "dataloader_option": "custom",
         "batch_size": 16,
         "input_size": 28,
         "hyper_parameters": {
@@ -357,13 +368,12 @@ def model_creation(package: dl.Package, project: dl.Project):
     # Hyper Parameters
     configuration = {
         "weights_filename": "model.pth",
-        "dataloader_option": "regular",
+        "dataloader_option": "custom",
         "batch_size": 16,
         "input_size": 28,
         "hyper_parameters": {
             "num_epochs": 50,
             "optimizer_lr": 0.01,
-            "output_size": 10
         }
     }
 
