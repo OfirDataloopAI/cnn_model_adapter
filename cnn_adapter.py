@@ -32,39 +32,35 @@ class ModelAdapter(dl.BaseModelAdapter):
             if isinstance(model_entity, dict) and "model_id" in model_entity:
                 model_entity = dl.models.get(model_id=model_entity["model_id"])
 
+        # TODO: INIT MODEL
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        # TODO: GET MODEL
-        # self.model = cnn_model.CNN(use_dropout=True).to(self.device)
         super(ModelAdapter, self).__init__(model_entity=model_entity)
-        logger.info("Model init completed")
 
     def load(self, local_path: str, **kwargs):
+        # TODO: LOAD MODEL
         weights_filename = self.model_entity.configuration.get("weights_filename", "model.pth")
+        weights_filepath = os.path.join(local_path, weights_filename)
+        output_size = len(self.model_entity.id_to_label_map)
 
-        # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
-        # if not self.model:
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        output_size = len(self.model_entity.label_to_id_map)
+        if not os.path.isfile(weights_filepath):
+            logger.warning(f'Weights path ({weights_filepath}) not found! loading default model weights')
+            weights_filepath = weights_filename
+
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
-        self.model.load_state_dict(torch.load(f=weights_filename, map_location=self.device.type))
+        self.model.load_state_dict(torch.load(f=weights_filepath, map_location=self.device.type))
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
+        # TODO: SAVE MODEL
         weights_filename = kwargs.get("weights_filename", "model.pth")
         self.model_entity.artifacts.upload(os.path.join(local_path, "*"))
         self.configuration.update({"weights_filename": weights_filename})
-
-        # TODO: SAVE MODEL
-        # weights_filename = kwargs.get("weights_filename", "model.pth")
-        # torch.save(self.model, os.path.join(local_path, weights_filename))
-        # self.configuration["weights_filename"] = weights_filename
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
         # Reset model for training
-        self.configuration["label_to_id_map"] = self.model_entity.label_to_id_map
-        output_size = len(self.model_entity.label_to_id_map)
+        self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
+        output_size = len(self.model_entity.id_to_label_map)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
 
@@ -287,7 +283,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v24"
+    git_tag = "v25"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
@@ -298,8 +294,7 @@ def package_creation(project: dl.Project):
         "input_size": 28,
         "hyper_parameters": {
             "num_epochs": 50,
-            "optimizer_lr": 0.01,
-            "output_size": 10
+            "optimizer_lr": 0.01
         }
     }
 
@@ -377,7 +372,7 @@ def model_creation(package: dl.Package, project: dl.Project):
         "input_size": 28,
         "hyper_parameters": {
             "num_epochs": 50,
-            "optimizer_lr": 0.01,
+            "optimizer_lr": 0.01
         }
     }
 
