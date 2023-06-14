@@ -20,7 +20,7 @@ def predict_test(model: dl.Model):
 
 
 def main():
-    model = dl.models.get(model_id='64665863ecdde83195289f4c')
+    model = dl.models.get(model_id='64897d2494dcae98d679be3b')
 
     # Model Training
     train_test(model=model)

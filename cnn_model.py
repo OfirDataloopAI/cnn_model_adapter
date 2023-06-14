@@ -1,24 +1,16 @@
+# from imgaug import augmenters as iaa
+import logging
+import os
+import copy
 import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from tqdm import tqdm
 import torch
 import torchvision
-import copy
-import os
-
-import matplotlib.pyplot as plt
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-
-
-# from torch.autograd import Variable
-from PIL import Image
 from torch.utils.data.sampler import SubsetRandomSampler
-# from torchvision import models
 from sklearn.model_selection import train_test_split
-# from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from tqdm import tqdm
-
-# from imgaug import augmenters as iaa
 
 
 # Model define
@@ -26,33 +18,36 @@ class CNN(nn.Module):
     def __init__(self, output_size=10, use_dropout=False, use_dropout2d=False):
         super(CNN, self).__init__()
 
-        self.output_size = output_size
         # flags
         self.use_dropout = use_dropout
         self.use_dropout2d = use_dropout2d
-        # kernel
+        # Convolutional layers - using kernels
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=5, padding='same')
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, padding='same')
         if self.use_dropout2d:
             self.spatial_dropout = nn.Dropout2d(p=0.2)
-        # FC layers - since we use global avg pooling,
-        # input to the FC layer = #output_features of the second conv layer
+        # Fully Connected layers - since we use global avg pooling,
+        # the input to the layer = #output_features of the second Convolutional layer
         self.fc1 = nn.Linear(in_features=32, out_features=256)
         if self.use_dropout:
             self.dropout = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(in_features=256, out_features=output_size)
 
     def forward(self, x):
+        x = self.conv1(x)
+        x = nn.functional.relu(x)
         # Max pooling over a (2, 2) window
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        # adaptive_avg_pool2d with output_size=1 = simple global avg pooling
+        x = nn.functional.max_pool2d(x, (2, 2))
         x = self.conv2(x)
         if self.use_dropout2d:
             x = self.spatial_dropout(x)
-        x = F.relu(x)
-        x = F.adaptive_avg_pool2d(x, 1)
-        x = torch.flatten(x, 1)  # flatten all dimensions except the batch dimension
-        x = F.relu(self.fc1(x))
+        x = nn.functional.relu(x)
+        # Adaptive average pooling with output_size=1 = Simple global average pooling
+        x = nn.functional.adaptive_avg_pool2d(x, 1)
+        # Flatten all dimensions except the batch dimension
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        x = nn.functional.relu(x)
         if self.use_dropout:
             x = self.dropout(x)
         x = self.fc2(x)
@@ -87,7 +82,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
     #########################
     num_epochs = hyper_parameters.get("num_epochs", 50)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
 
     ######################################
     # Data Structures for Saving Results #
@@ -176,8 +171,8 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
               "Epoch: {}\n" \
               "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
                                                    cnn_graph_data["optimal_val_accuracy"])
-    print(results)
-    # plot_graph(cnn_graph_data)
+    # print(results)
+    logging.info(results)
     return cnn_graph_data
 
 
@@ -195,7 +190,7 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
     img_tensors = [preprocess(img.astype('uint8')) for img in batch]
     batch_tensor = torch.stack(tensors=img_tensors).to(device)
     batch_output = model(batch_tensor)
-    batch_predictions = nn.functional.softmax(batch_output, dim=1)
+    batch_predictions = nn.functional.softmax(input=batch_output, dim=1)
 
     return batch_predictions
 

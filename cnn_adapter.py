@@ -1,15 +1,13 @@
 # from imgaug import augmenters as iaa
-import json
-
-from PIL import Image
-import numpy as np
 import dtlpy as dl
-import torch.nn
-import logging
-import torch
 import os
 import re
-
+import json
+import logging
+import numpy as np
+from PIL import Image
+import torch
+import torch.nn
 from torch.utils.data import DataLoader, Dataset
 from dtlpy.utilities.dataset_generators.dataset_generator import collate_torch
 from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
@@ -47,8 +45,9 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
         if not self.model:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+            output_size = len(self.model_entity.id_to_label_map)
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
 
         self.model.load_state_dict(torch.load(weights_filename))
         logger.info("Model loaded successfully")
@@ -62,11 +61,14 @@ class ModelAdapter(dl.BaseModelAdapter):
 
     def train(self, data_path: str, output_path: str, **kwargs):
         # Reset model for training
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = cnn_model.CNN(use_dropout=True).to(self.device)
-
         self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
-        print("Model Configuration:\n{}".format(self.configuration))
+        output_size = len(self.model_entity.id_to_label_map)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
+
+        # Print configuration
+        # print("Model Configuration:\n{}".format(self.configuration))
+        logger.info("Model Configuration:\n{}".format(self.configuration))
 
         ######################
         # Create Dataloaders #
@@ -77,14 +79,6 @@ class ModelAdapter(dl.BaseModelAdapter):
         # TODO: TRAIN MODEL
         logger.info("Model started training")
         hyper_parameters = self.configuration.get("hyper_parameters", None)
-        labels_count = self.configuration.get("id_to_label_map", None)
-        if labels_count:
-            output_size = len(labels_count)
-        else:
-            output_size = hyper_parameters.get("output_size", 10)
-
-        self.model = cnn_model.CNN(output_size=output_size,
-                                   use_dropout=True).to(self.device)
         train_results = cnn_model.train_model(model=self.model,
                                               device=self.device,
                                               hyper_parameters=hyper_parameters,
@@ -108,12 +102,11 @@ class ModelAdapter(dl.BaseModelAdapter):
                                          y=train_results["valid"]["accuracy"][epoch]))
 
         self.model_entity.metrics.create(samples=samples, dataset_id=self.model_entity.dataset_id)
-
         logger.info("Model trained successfully")
 
     def predict(self, batch: np.ndarray, **kwargs):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.model = cnn_model.CNN(use_dropout=True).to(self.device)
 
         # TODO: PREDICT MODEL
         input_size = self.configuration.get("input_size", 28)
@@ -165,7 +158,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         def convert_image_filepaths_to_arrays(image_filepaths):
             image_list = list()
             input_size = self.configuration["input_size"]
-            black_white_threshold = 100
+            black_white_threshold = 50
 
             for image_filepath in image_filepaths:
                 image = Image.open(fp=image_filepath)
