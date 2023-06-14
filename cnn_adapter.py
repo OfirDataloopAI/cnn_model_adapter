@@ -45,7 +45,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
         if not self.model:
-            output_size = len(self.model_entity.id_to_label_map)
+            output_size = len(self.model_entity.label_to_id_map)
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
 
@@ -61,8 +61,8 @@ class ModelAdapter(dl.BaseModelAdapter):
 
     def train(self, data_path: str, output_path: str, **kwargs):
         # Reset model for training
-        self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
-        output_size = len(self.model_entity.id_to_label_map)
+        self.configuration["label_to_id_map"] = self.model_entity.label_to_id_map
+        output_size = len(self.model_entity.label_to_id_map)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
 
@@ -89,17 +89,18 @@ class ModelAdapter(dl.BaseModelAdapter):
         # TODO: Save weights to artifacts
         samples = list()
         for epoch in train_results["epochs"]:
-            samples.append(dl.PlotSample(figure="Loss", legend="train loss", x=epoch,
-                                         y=train_results["train"]["loss"][epoch]))
-
-            samples.append(dl.PlotSample(figure="Loss", legend="valid loss", x=epoch,
-                                         y=train_results["valid"]["loss"][epoch]))
-
-            samples.append(dl.PlotSample(figure="Accuracy", legend='train accuracy', x=epoch,
-                                         y=train_results["train"]["accuracy"][epoch]))
-
-            samples.append(dl.PlotSample(figure="Accuracy", legend='valid accuracy', x=epoch,
-                                         y=train_results["valid"]["accuracy"][epoch]))
+            samples.append(dl.PlotSample(
+                figure="Loss", legend="train loss", x=epoch, y=train_results["train"]["loss"][epoch])
+            )
+            samples.append(dl.PlotSample(
+                figure="Loss", legend="valid loss", x=epoch, y=train_results["valid"]["loss"][epoch])
+            )
+            samples.append(dl.PlotSample(
+                figure="Accuracy", legend='train accuracy', x=epoch, y=train_results["train"]["accuracy"][epoch])
+            )
+            samples.append(dl.PlotSample(
+                figure="Accuracy", legend='valid accuracy', x=epoch, y=train_results["valid"]["accuracy"][epoch])
+            )
 
         self.model_entity.metrics.create(samples=samples, dataset_id=self.model_entity.dataset_id)
         logger.info("Model trained successfully")
