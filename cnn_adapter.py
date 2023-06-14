@@ -35,7 +35,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # TODO: GET MODEL
-        self.model = cnn_model.CNN(use_dropout=True).to(self.device)
+        # self.model = cnn_model.CNN(use_dropout=True).to(self.device)
         super(ModelAdapter, self).__init__(model_entity=model_entity)
         logger.info("Model init completed")
 
@@ -43,12 +43,11 @@ class ModelAdapter(dl.BaseModelAdapter):
         weights_filename = self.model_entity.configuration.get("weights_filename", "model.pth")
 
         # TODO: LOAD MODEL - CURRENTLY WORK WITH GPU ONLY
-        if not self.model:
-            output_size = len(self.model_entity.label_to_id_map)
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
-
-        self.model.load_state_dict(torch.load(weights_filename))
+        # if not self.model:
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        output_size = len(self.model_entity.label_to_id_map)
+        self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
+        self.model.load_state_dict(torch.load(f=weights_filename, map_location=self.device.type))
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
@@ -288,7 +287,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v23"
+    git_tag = "v24"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
