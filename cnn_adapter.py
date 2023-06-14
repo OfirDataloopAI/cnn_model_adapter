@@ -48,6 +48,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
         self.model.load_state_dict(torch.load(f=weights_filepath, map_location=self.device.type))
+        logging.info("Weights got loaded from path: {}".format(weights_filepath))
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
@@ -55,6 +56,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         weights_filename = kwargs.get("weights_filename", "model.pth")
         self.model_entity.artifacts.upload(os.path.join(local_path, "*"))
         self.configuration.update({"weights_filename": weights_filename})
+        logging.info("Weights got saved to path: {}".format(os.path.join(local_path, weights_filename)))
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
@@ -283,7 +285,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v25"
+    git_tag = "v26"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters

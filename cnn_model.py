@@ -76,6 +76,8 @@ def get_data_transforms(input_size):
 
 def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str,
                 dataloader_option: str = 'custom'):
+    save_path = "{}.model.pth".format(output_path)
+
     #########################
     # Load Hyper Parameters #
     #########################
@@ -165,9 +167,9 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 cnn_graph_data["optimal_val_epoch"] = optimal_val_epoch
                 cnn_graph_data["optimal_val_accuracy"] = optimal_val_accuracy
 
-                PATH = "{}.model.pth".format(output_path)
-                torch.save(copy.deepcopy(model.state_dict()), PATH)
+                torch.save(copy.deepcopy(model.state_dict()), save_path)
 
+    logging.info("Saving weights in path: {}".format(save_path))
     results = "Optimal hyper parameters were found at:\n" \
               "Epoch: {}\n" \
               "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
