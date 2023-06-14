@@ -73,7 +73,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         # Create Dataloaders #
         ######################
-        dataloader_option = "regular"
+        dataloader_option = self.configuration["dataloader_option"]
         dataloaders = self.get_dataloaders(data_path=data_path, dataloader_option=dataloader_option)
 
         # TODO: TRAIN MODEL
@@ -272,12 +272,13 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v21"
+    git_tag = "v23"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
     default_configuration = {
         "weights_filename": "model.pth",
+        "dataloader_option": "regular",
         "batch_size": 16,
         "input_size": 28,
         "hyper_parameters": {
@@ -356,6 +357,7 @@ def model_creation(package: dl.Package, project: dl.Project):
     # Hyper Parameters
     configuration = {
         "weights_filename": "model.pth",
+        "dataloader_option": "regular",
         "batch_size": 16,
         "input_size": 28,
         "hyper_parameters": {
