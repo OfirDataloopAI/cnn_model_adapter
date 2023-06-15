@@ -297,7 +297,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v27"
+    git_tag = "v28"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
@@ -372,8 +372,7 @@ def dql_filters():
     return train_filter, validation_filter
 
 
-def model_creation(package: dl.Package, project: dl.Project):
-    model_name = "cnn model"
+def model_creation(model_name: str, package: dl.Package, project: dl.Project):
     description = "cnn model for MNIST dataset"
     tags = ["pretrained", "MNIST"]
     dataset = project.datasets.get(dataset_name="MNIST_Dataset")
@@ -420,7 +419,8 @@ def main():
 
     # Model Creation
     # package = project.packages.get(package_name='cnn')
-    # model_creation(package=package, project=project)
+    # model_name = "cnn_model"
+    # model_creation(model_name=model_name, package=package, project=project)
 
 
 if __name__ == "__main__":
