@@ -182,6 +182,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                                                    cnn_graph_data["optimal_val_accuracy"])
     # print(results)
     logging.info(results)
+    plot_graph(cnn_graph_data)
     return cnn_graph_data
 
 

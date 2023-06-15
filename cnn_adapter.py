@@ -76,7 +76,7 @@ class ModelAdapter(dl.BaseModelAdapter):
         ######################
         # Create Dataloaders #
         ######################
-        dataloader_option = self.configuration["dataloader_option"]
+        dataloader_option = self.configuration.get("dataloader_option", "custom")
         dataloaders = self.get_dataloaders(data_path=data_path, dataloader_option=dataloader_option)
 
         # TODO: TRAIN MODEL
@@ -151,6 +151,7 @@ class ModelAdapter(dl.BaseModelAdapter):
                 for file in files:
                     if file.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
                         image_filepaths.append(os.path.join(root, file))
+
             return image_filepaths
 
         def get_json_filepaths(directory):
@@ -159,22 +160,18 @@ class ModelAdapter(dl.BaseModelAdapter):
                 for file in files:
                     if file.lower().endswith('.json'):
                         json_filepaths.append(os.path.join(root, file))
+
             return json_filepaths
 
         def convert_image_filepaths_to_arrays(image_filepaths):
             image_list = list()
-            input_size = self.configuration["input_size"]
-            black_white_threshold = 50
-
             for image_filepath in image_filepaths:
                 image = Image.open(fp=image_filepath)
                 image_array = np.array(image)
                 image_array = image_array.astype(float)
-                image_array[image_array < black_white_threshold] = -1.0
-                image_array[image_array >= black_white_threshold] = 1.0
-                image_array.resize((1, input_size, input_size))
                 image_list.append(image_array)
                 image.close()
+
             return image_list
 
         def convert_json_filepaths_to_labels(json_filepaths):
@@ -184,6 +181,7 @@ class ModelAdapter(dl.BaseModelAdapter):
                 json_data = json.load(fp=json_file)
                 label = int(json_data["annotations"][0]["label"])
                 label_list.append(label)
+
             return label_list
 
         # Get data directories
@@ -214,27 +212,35 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         # Custom Dataset Creation
         class CustomDataset(Dataset):
-            def __init__(self, data_list, labels_list):
+            def __init__(self, data_list, labels_list, transforms_list):
                 self.dataset = [(data, label) for data, label in zip(data_list, labels_list)]
                 self.length = len(self.dataset)
+                self.transforms = transforms_list
 
             def __len__(self):
                 return self.length
 
             def __getitem__(self, idx):
                 image, label = self.dataset[idx]
-                # import torchvision
-                # transform1 = torchvision.transforms.ToTensor()
-                # transform2 = torchvision.transforms.Normalize((0.5,), (0.5,))
-                #
-                # image = transform1(image)
-                # image = transform2(image)
+                for transform in self.transforms:
+                    image = transform(image)
+
                 return image, label
 
-        train_dataset = CustomDataset(train_image_data, train_image_labels)
-        valid_dataset = CustomDataset(valid_image_data, valid_image_labels)
+        input_size = self.configuration.get("input_size", 28)
+        batch_size = self.configuration.get("batch_size", 16)
+        data_transforms = cnn_model.get_data_transforms(input_size=input_size)
+        train_dataset = CustomDataset(
+            data_list=train_image_data,
+            labels_list=train_image_labels,
+            transforms_list=data_transforms["train"]
+        )
+        valid_dataset = CustomDataset(
+            data_list=valid_image_data,
+            labels_list=valid_image_labels,
+            transforms_list=data_transforms["valid"]
+        )
 
-        batch_size = self.configuration["batch_size"]
         dataloaders = {
             "train": torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2),
             "valid": torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, num_workers=2)
@@ -294,7 +300,7 @@ def package_creation(project: dl.Project):
     package_name = "cnn"
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v26"
+    git_tag = "v27"
     module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
 
     # Default Hyper Parameters
