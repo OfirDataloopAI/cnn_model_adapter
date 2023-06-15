@@ -109,9 +109,6 @@ class ModelAdapter(dl.BaseModelAdapter):
         logger.info("Model trained successfully")
 
     def predict(self, batch: np.ndarray, **kwargs):
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # self.model = cnn_model.CNN(use_dropout=True).to(self.device)
-
         # TODO: PREDICT MODEL
         input_size = self.configuration.get("input_size", 28)
         batch_predictions = cnn_model.predict(model=self.model, device=self.device, batch=batch, input_size=input_size)
