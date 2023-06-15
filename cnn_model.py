@@ -12,7 +12,11 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.model_selection import train_test_split
 
 
-# Model define
+################
+# Model Define #
+################
+
+# Model init
 class CNN(nn.Module):
     def __init__(self, output_size=10, use_dropout=False, use_dropout2d=False):
         super(CNN, self).__init__()
@@ -76,7 +80,7 @@ def get_data_transforms(input_size):
 
 def train_model(model: CNN, device: torch.device, hyper_parameters: dict, dataloaders: dict, output_path: str,
                 dataloader_option: str = 'custom'):
-    save_path = "{}.model.pth".format(output_path)
+    save_path = "{}/model.pth".format(output_path)
 
     #########################
     # Load Hyper Parameters #
@@ -142,7 +146,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
                 with torch.set_grad_enabled(phase == "train"):
                     outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
+                    _, predicts = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
                     # Calculating backward and optimize only during the training phase
@@ -152,7 +156,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
                 # Total loss of the mini batch
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data).cpu().item()
+                running_corrects += torch.sum(predicts == labels.data).cpu().item()
 
             # Saving epoch loss and accuracy
             epoch_loss = running_loss / dataset_size
@@ -169,7 +173,9 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
 
                 torch.save(copy.deepcopy(model.state_dict()), save_path)
 
-    logging.info("Saving weights in path: {}".format(save_path))
+    info = "Saving weights in path: {}".format(save_path)
+    # print(info)
+    logging.info(info)
     results = "Optimal hyper parameters were found at:\n" \
               "Epoch: {}\n" \
               "The Validation Accuracy: {}".format(cnn_graph_data["optimal_val_epoch"],
@@ -224,13 +230,13 @@ def get_dataloaders():
     batch_size = 16
 
     # Datasets
-    trainset = torchvision.datasets.MNIST(root='./data', train=True,
+    train_set = torchvision.datasets.MNIST(root='./data', train=True,
+                                           download=True, transform=transform)
+    test_set = torchvision.datasets.MNIST(root='./data', train=False,
                                           download=True, transform=transform)
-    testset = torchvision.datasets.MNIST(root='./data', train=False,
-                                         download=True, transform=transform)
 
     # Train and Validation split
-    train_size = len(trainset)
+    train_size = len(train_set)
     train_idx = np.arange(train_size)
     train_subset_idx = np.random.choice(train_idx, N)
     train_subset_idx, val_subset_idx = train_test_split(train_subset_idx,
@@ -242,24 +248,24 @@ def get_dataloaders():
     validation_sampler = SubsetRandomSampler(val_subset_idx)
 
     # Training Loaders
-    trainloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size,
-                                              sampler=train_sampler, num_workers=2)
-    validationloader = torch.utils.data.DataLoader(dataset=trainset, batch_size=batch_size,
-                                                   sampler=validation_sampler, num_workers=2)
-    testloader = torch.utils.data.DataLoader(dataset=testset, batch_size=batch_size,
-                                             shuffle=True, num_workers=2)
+    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size,
+                                               sampler=train_sampler, num_workers=2)
+    validation_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size,
+                                                    sampler=validation_sampler, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size,
+                                              shuffle=True, num_workers=2)
 
     # Printing Dataset Sizes
-    trainset_size = len(train_subset_idx)
-    validset_size = len(val_subset_idx)
-    testset_size = len(testset)
+    train_set_size = len(train_subset_idx)
+    valid_set_size = len(val_subset_idx)
+    test_set_size = len(test_set)
     print('='*25)
-    print('Train dataset:', trainset_size)
-    print('Validation dataset:', validset_size)
-    print('Test dataset:', testset_size)
+    print('Train dataset:', train_set_size)
+    print('Validation dataset:', valid_set_size)
+    print('Test dataset:', test_set_size)
     print('='*25)
 
-    return trainloader, validationloader, testloader
+    return train_loader, validation_loader, test_loader
 
 
 # Plot graph
@@ -312,17 +318,17 @@ def local_testing(model, device, dataloader):
         for inputs, labels in dataloader:
             inputs = inputs.to(device)
             labels = labels.to(device)
-            # logits
+
             outputs = model(inputs)
-            preds_prob = nn.functional.softmax(input=outputs, dim=1)
-            _, preds = torch.max(input=preds_prob, dim=1)
+            predicts_prob = nn.functional.softmax(input=outputs, dim=1)
+            _, predicts = torch.max(input=predicts_prob, dim=1)
             # eval labels here numeric (not one-hot)
-            correct_pred = torch.eq(labels, preds).cpu()
-            correct_count += correct_pred.numpy().sum()
+            correct_predicts = torch.eq(labels, predicts).cpu()
+            correct_count += correct_predicts.numpy().sum()
             all_count += len(labels)
 
             y_true.extend(labels.tolist())
-            y_predict.extend(preds.tolist())
+            y_predict.extend(predicts.tolist())
 
     print("Number Of Images Tested =", all_count)
     print("Model Accuracy =", (correct_count/all_count) * 100)
@@ -334,15 +340,15 @@ def parse_predict(batch_predictions) -> list:
     batch_annotations = list()
 
     for img_prediction in batch_predictions:
-        pred_score, high_pred_index = torch.max(img_prediction, 0)
-        pred_label = str(high_pred_index.item())
+        predict_score, highest_predict_index = torch.max(img_prediction, 0)
+        predict_label = str(highest_predict_index.item())
         collection = dl.AnnotationCollection()
-        collection.add(annotation_definition=dl.Classification(label=pred_label),
+        collection.add(annotation_definition=dl.Classification(label=predict_label),
                        model_info={'name': "CNN",
-                                   'confidence': pred_score.item(),
+                                   'confidence': predict_score.item(),
                                    'model_id': "local id",
                                    'dataset_id': "local folder"})
-        print("Predicted {:1} ({:1.3f})".format(pred_label, pred_score))
+        print("Predicted {:1} ({:1.3f})".format(predict_label, predict_score))
         batch_annotations.append(collection)
 
     return batch_annotations
@@ -350,11 +356,12 @@ def parse_predict(batch_predictions) -> list:
 
 # Model Predict Local Test
 def local_predict(model, device) -> list:
+    input_size = 28
     weights_path = "model.pth"
     model.load_state_dict(torch.load(weights_path))
 
-    input_size = 28
-    image_folder = "./test_images"  # Path to the image folder
+    # Path to the image folder
+    image_folder = "./test_images"
     image_files = [file for file in os.listdir(image_folder) if file.endswith(".jpg") or file.endswith(".png")]
 
     # Load and convert images to np.ndarray
@@ -382,10 +389,10 @@ def main():
         "optimizer_lr": 0.01,
         "output_size": 10,
     }
-    trainloader, validationloader, testloader = get_dataloaders()
+    train_loader, validation_loader, test_loader = get_dataloaders()
     dataloaders = {
-        "train": trainloader,
-        "valid": validationloader
+        "train": train_loader,
+        "valid": validation_loader
     }
     output_path = "."
 
@@ -393,7 +400,7 @@ def main():
     local_training(model, device, hyper_parameters, dataloaders, output_path)
 
     # Model Testing
-    # local_testing(model, device, testloader)
+    # local_testing(model, device, test_loader)
 
     # Model Predict
     # local_predict(model, device)

@@ -48,7 +48,9 @@ class ModelAdapter(dl.BaseModelAdapter):
 
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
         self.model.load_state_dict(torch.load(f=weights_filepath, map_location=self.device.type))
-        logging.info("Weights got loaded from path: {}".format(weights_filepath))
+        info = "Weights got loaded from path: {}".format(weights_filepath)
+        # print(info)
+        logging.info(info)
         logger.info("Model loaded successfully")
 
     def save(self, local_path: str, **kwargs):
@@ -56,14 +58,15 @@ class ModelAdapter(dl.BaseModelAdapter):
         weights_filename = kwargs.get("weights_filename", "model.pth")
         self.model_entity.artifacts.upload(os.path.join(local_path, "*"))
         self.configuration.update({"weights_filename": weights_filename})
-        logging.info("Weights got saved to path: {}".format(os.path.join(local_path, weights_filename)))
+        info = "Weights got saved to path: {}".format(os.path.join(local_path, weights_filename))
+        # print(info)
+        logging.info(info)
         logger.info("Model saved successfully")
 
     def train(self, data_path: str, output_path: str, **kwargs):
         # Reset model for training
         self.configuration["id_to_label_map"] = self.model_entity.id_to_label_map
         output_size = len(self.model_entity.id_to_label_map)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = cnn_model.CNN(output_size=output_size, use_dropout=True).to(self.device)
 
         # Print configuration
@@ -115,15 +118,15 @@ class ModelAdapter(dl.BaseModelAdapter):
         batch_annotations = list()
 
         for img_prediction in batch_predictions:
-            pred_score, high_pred_index = torch.max(img_prediction, 0)
-            pred_label = self.model_entity.id_to_label_map.get(int(high_pred_index.item()), "UNKNOWN")
+            predict_score, highest_predict_index = torch.max(img_prediction, 0)
+            predict_label = self.model_entity.id_to_label_map.get(int(highest_predict_index.item()), "UNKNOWN")
             collection = dl.AnnotationCollection()
-            collection.add(annotation_definition=dl.Classification(label=pred_label),
+            collection.add(annotation_definition=dl.Classification(label=predict_label),
                            model_info={"name": self.model_entity.name,
-                                       "confidence": pred_score.item(),
+                                       "confidence": predict_score.item(),
                                        "model_id": self.model_entity.id,
                                        "dataset_id": self.model_entity.dataset_id})
-            logger.debug("Predicted {:1} ({:1.3f})".format(pred_label, pred_score))
+            logger.debug("Predicted {:1} ({:1.3f})".format(predict_label, predict_score))
             batch_annotations.append(collection)
 
         return batch_annotations
@@ -220,6 +223,12 @@ class ModelAdapter(dl.BaseModelAdapter):
 
             def __getitem__(self, idx):
                 image, label = self.dataset[idx]
+                # import torchvision
+                # transform1 = torchvision.transforms.ToTensor()
+                # transform2 = torchvision.transforms.Normalize((0.5,), (0.5,))
+                #
+                # image = transform1(image)
+                # image = transform2(image)
                 return image, label
 
         train_dataset = CustomDataset(train_image_data, train_image_labels)
