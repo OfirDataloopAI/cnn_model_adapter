@@ -1,5 +1,5 @@
 import dtlpy as dl
-from cnn_adapter import ModelAdapter
+from model_adapter import ModelAdapter
 
 
 def train_test(model: dl.Model):
@@ -20,7 +20,8 @@ def predict_test(model: dl.Model):
 
 
 def main():
-    model = dl.models.get(model_id='6489e24bf01d5708c22587cd')
+    model_id = "6543725d4b64bd50f3618156"
+    model = dl.models.get(model_id=model_id)
 
     # Model Training
     train_test(model=model)

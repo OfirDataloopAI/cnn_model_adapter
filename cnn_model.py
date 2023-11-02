@@ -147,6 +147,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
                 with torch.set_grad_enabled(phase == "train"):
                     outputs = model(inputs)
                     _, predicts = torch.max(outputs, 1)
+                    labels = torch.tensor(labels, dtype=torch.long)
                     loss = criterion(outputs, labels)
 
                     # Calculating backward and optimize only during the training phase

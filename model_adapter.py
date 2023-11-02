@@ -12,6 +12,7 @@ from dtlpy.utilities.dataset_generators.dataset_generator import collate_torch
 from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
 import cnn_model
+from deployment_parameters import project_name, package_name, model_name
 
 logger = logging.getLogger('cnn-adapter')
 
@@ -293,12 +294,11 @@ class ModelAdapter(dl.BaseModelAdapter):
 ####################
 # Package Creation #
 ####################
-def package_creation(project: dl.Project):
-    package_name = "cnn"
+def package_creation(project: dl.Project, package_name: str):
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
     git_tag = "v28"
-    module = dl.PackageModule.from_entry_point(entry_point="cnn_adapter.py")
+    module = dl.PackageModule.from_entry_point(entry_point="model_adapter.py")
 
     # Default Hyper Parameters
     default_configuration = {
@@ -412,15 +412,16 @@ def model_creation(model_name: str, package: dl.Package, project: dl.Project):
 
 
 def main():
-    project = dl.projects.get(project_name="Abeer N Ofir Project")
+    # project_name = "Abeer N Ofir Project"
+    project = dl.projects.get(project_name=project_name)
 
     # Package Creation
-    package_creation(project=project)
+    package_creation(project=project, package_name=package_name)
 
     # Model Creation
-    # package = project.packages.get(package_name='cnn')
+    package = project.packages.get(package_name=package_name)
     # model_name = "cnn_model"
-    # model_creation(model_name=model_name, package=package, project=project)
+    model_creation(model_name=model_name, package=package, project=project)
 
 
 if __name__ == "__main__":

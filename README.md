@@ -1,6 +1,6 @@
 # Convolutional Neural Network (CNN) with Adapter to Dataloop
 
-![cnn.png](images%2Fcnn.png)
+![cnn.png](assets%2Fcnn.png)
 
 A simple CNN model with an adapter to support deployment and execution of the model in the Dataloop platform.
 
@@ -28,7 +28,7 @@ correctly.
 
 #### 2.adapter script:
 
-The [cnn_adapter.py](cnn_adapter.py) is an example of an adapter implementation with the required functions:
+The [model_adapter.py](model_adapter.py) is an example of an adapter implementation with the required functions:
 `load`, `save`, `train`, `predict`, `convert_from_dtlpy`.
 
 `load` - A function to load the model with the most recent weights (and artifacts, if there are). This function is 
@@ -45,7 +45,7 @@ For example: COCO, VOC, YOLO.
 
 #### 3.tests script:
 
-The [cnn_adapter_tests.py](cnn_adapter_tests.py) is a script to evaluate the model performance on the local machine 
+The [model_adapter_tests.py](model_adapter_tests.py) is a script to evaluate the model performance on the local machine 
 before running it on a remote machine. A script for debugging the model performance and would be in the remote machine 
 to detect bugs and failures before they occur on the remote machine.  
 
@@ -61,15 +61,15 @@ Link to MNIST dataset uploader: https://github.com/OfirDataloopAI/mnist_uploader
 
 ### How to deploy the package:
 
-From function `package_creation` in [cnn_adapter.py](cnn_adapter.py)
+From function `package_creation` in [model_adapter.py](model_adapter.py)
 
 ### How to deploy the model:
 
-From function `model_creation` in [cnn_adapter.py](cnn_adapter.py)
+From function `model_creation` in [model_adapter.py](model_adapter.py)
 
 ### How to test locally:
 
-From functions `train_test` and `predict_test` in [cnn_adapter_tests.py](cnn_adapter_tests.py)
+From functions `train_test` and `predict_test` in [model_adapter_tests.py](model_adapter_tests.py)
 
 And from function `local_training`, `local_testing` and `local_predict` in [cnn_model.py](cnn_model.py)
 
