@@ -315,7 +315,7 @@ def package_creation(project: dl.Project, package_name: str):
     service_config = {
         "runtime": dl.KubernetesRuntime(
             pod_type=dl.INSTANCE_CATALOG_GPU_K80_S,
-            runner_image="gcr.io/viewo-g/modelmgmt/resnet:0.0.7",
+            runner_image="ultralytics/ultralytics:8.0.183",
             autoscaler=dl.KubernetesRabbitmqAutoscaler(
                 min_replicas=0,
                 max_replicas=1
