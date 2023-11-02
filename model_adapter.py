@@ -12,7 +12,8 @@ from dtlpy.utilities.dataset_generators.dataset_generator import collate_torch
 from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
 import cnn_model
-from deployment_parameters import project_name, package_name, model_name
+import deployment_parameters
+# from deployment_parameters import project_name, package_name, model_name, git_url, git_tag
 
 logger = logging.getLogger('cnn-adapter')
 
@@ -295,9 +296,6 @@ class ModelAdapter(dl.BaseModelAdapter):
 # Package Creation #
 ####################
 def package_creation(project: dl.Project, package_name: str):
-    git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
-    # TODO: Very important to add tag
-    git_tag = "v31"
     module = dl.PackageModule.from_entry_point(entry_point="model_adapter.py")
 
     # Default Hyper Parameters
@@ -341,8 +339,8 @@ def package_creation(project: dl.Project, package_name: str):
         package_type="ml",
         codebase=dl.GitCodebase(
             type=dl.PackageCodebaseType.GIT,
-            git_url=git_url,
-            git_tag=git_tag
+            git_url=deployment_parameters.git_url,
+            git_tag=deployment_parameters.git_tag
         ),
         modules=[module],
         service_config=service_config,
@@ -413,15 +411,15 @@ def model_creation(model_name: str, package: dl.Package, project: dl.Project):
 
 def main():
     # project_name = "Abeer N Ofir Project"
-    project = dl.projects.get(project_name=project_name)
+    project = dl.projects.get(project_name=deployment_parameters.project_name)
 
     # Package Creation
-    package_creation(project=project, package_name=package_name)
+    package_creation(project=project, package_name=deployment_parameters.package_name)
 
     # Model Creation
-    package = project.packages.get(package_name=package_name)
+    package = project.packages.get(package_name=deployment_parameters.package_name)
     # model_name = "cnn_model"
-    model_creation(model_name=model_name, package=package, project=project)
+    model_creation(model_name=deployment_parameters.model_name, package=package, project=project)
 
 
 if __name__ == "__main__":

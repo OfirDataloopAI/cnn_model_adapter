@@ -8,8 +8,10 @@ def train_test(model: dl.Model):
 
 
 def predict_test(model: dl.Model):
+    item_id = '645cc2de66671c2da8908f3a'
+
     model_adapter = ModelAdapter(model_entity=model)
-    item = dl.items.get(item_id='645cc2de66671c2da8908f3a')
+    item = dl.items.get(item_id=item_id)
     result = model_adapter.predict_items(items=[item])
 
     item_list = result[0]
