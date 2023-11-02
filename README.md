@@ -81,5 +81,5 @@ And from function `local_training`, `local_testing` and `local_predict` in [cnn_
 
 ### Requirements: 
 
-See [requirements.txt](requirements.txt)
+See [_requirements.txt](_requirements.txt)
 
