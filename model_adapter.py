@@ -297,7 +297,7 @@ class ModelAdapter(dl.BaseModelAdapter):
 def package_creation(project: dl.Project, package_name: str):
     git_url = "https://github.com/OfirDataloopAI/cnn_model_adapter"
     # TODO: Very important to add tag
-    git_tag = "v29"
+    git_tag = "v31"
     module = dl.PackageModule.from_entry_point(entry_point="model_adapter.py")
 
     # Default Hyper Parameters
