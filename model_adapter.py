@@ -6,14 +6,12 @@ import logging
 import numpy as np
 from PIL import Image
 import torch
-import torch.nn
 from torch.utils.data import DataLoader, Dataset
 from dtlpy.utilities.dataset_generators.dataset_generator import collate_torch
 from dtlpy.utilities.dataset_generators.dataset_generator_torch import DatasetGeneratorTorch
 
 import cnn_model
 import deployment_parameters
-# from deployment_parameters import project_name, package_name, model_name, git_url, git_tag
 
 logger = logging.getLogger('cnn-adapter')
 

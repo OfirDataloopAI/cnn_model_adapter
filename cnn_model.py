@@ -7,7 +7,6 @@ from PIL import Image
 from tqdm import tqdm
 import torch
 import torchvision
-import torch.nn as nn
 from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.model_selection import train_test_split
 
@@ -17,7 +16,7 @@ from sklearn.model_selection import train_test_split
 ################
 
 # Model init
-class CNN(nn.Module):
+class CNN(torch.nn.Module):
     def __init__(self, output_size=10, use_dropout=False, use_dropout2d=False):
         super(CNN, self).__init__()
 
@@ -25,32 +24,32 @@ class CNN(nn.Module):
         self.use_dropout = use_dropout
         self.use_dropout2d = use_dropout2d
         # Convolutional layers - using kernels
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=5, padding='same')
-        self.conv2 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, padding='same')
+        self.conv1 = torch.nn.Conv2d(in_channels=1, out_channels=64, kernel_size=5, padding='same')
+        self.conv2 = torch.nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, padding='same')
         if self.use_dropout2d:
-            self.spatial_dropout = nn.Dropout2d(p=0.2)
+            self.spatial_dropout = torch.nn.Dropout2d(p=0.2)
         # Fully Connected layers - since we use global avg pooling,
         # the input to the layer = #output_features of the second Convolutional layer
-        self.fc1 = nn.Linear(in_features=32, out_features=256)
+        self.fc1 = torch.nn.Linear(in_features=32, out_features=256)
         if self.use_dropout:
-            self.dropout = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(in_features=256, out_features=output_size)
+            self.dropout = torch.nn.Dropout(p=0.5)
+        self.fc2 = torch.nn.Linear(in_features=256, out_features=output_size)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = nn.functional.relu(x)
+        x = torch.nn.functional.relu(x)
         # Max pooling over a (2, 2) window
-        x = nn.functional.max_pool2d(x, (2, 2))
+        x = torch.nn.functional.max_pool2d(x, (2, 2))
         x = self.conv2(x)
         if self.use_dropout2d:
             x = self.spatial_dropout(x)
-        x = nn.functional.relu(x)
+        x = torch.nn.functional.relu(x)
         # Adaptive average pooling with output_size=1 = Simple global average pooling
-        x = nn.functional.adaptive_avg_pool2d(x, 1)
+        x = torch.nn.functional.adaptive_avg_pool2d(x, 1)
         # Flatten all dimensions except the batch dimension
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        x = nn.functional.relu(x)
+        x = torch.nn.functional.relu(x)
         if self.use_dropout:
             x = self.dropout(x)
         x = self.fc2(x)
@@ -86,7 +85,7 @@ def train_model(model: CNN, device: torch.device, hyper_parameters: dict, datalo
     # Load Hyper Parameters #
     #########################
     num_epochs = hyper_parameters.get("num_epochs", 50)
-    criterion = nn.CrossEntropyLoss()
+    criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameters.get("optimizer_lr", 0.01))
 
     ######################################
@@ -201,7 +200,7 @@ def predict(model: CNN, device: torch.device, batch: np.ndarray, input_size: int
     img_tensors = [preprocess(img.astype('uint8')) for img in batch]
     batch_tensor = torch.stack(tensors=img_tensors).to(device)
     batch_output = model(batch_tensor)
-    batch_predictions = nn.functional.softmax(input=batch_output, dim=1)
+    batch_predictions = torch.nn.functional.softmax(input=batch_output, dim=1)
 
     return batch_predictions
 
@@ -322,7 +321,7 @@ def local_testing(model, device, dataloader):
             labels = labels.to(device)
 
             outputs = model(inputs)
-            predicts_prob = nn.functional.softmax(input=outputs, dim=1)
+            predicts_prob = torch.nn.functional.softmax(input=outputs, dim=1)
             _, predicts = torch.max(input=predicts_prob, dim=1)
             # eval labels here numeric (not one-hot)
             correct_predicts = torch.eq(labels, predicts).cpu()
